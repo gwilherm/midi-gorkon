@@ -9,7 +9,8 @@ import mido
 import sys
 import os
 
-POT_NB      = 8
+# Number of encoders (XY = 2 encoders)
+ENC_NB      = 8
 REQUEST_REC = 2000
 
 class SysExMsg(IntEnum):
@@ -52,23 +53,39 @@ class Root:
         self.ddout = tk.OptionMenu(self.root, self.output_conn, value='')
         self.ddout.place(relx=1, y=10, w=200, anchor='ne')
 
-        self.pot = []
+        self.enc_mcc = []
 
         # Right side text boxes
         pady=300
-        for i in range(int(POT_NB / 2)):
-            self.pot += [tk.Entry()]
-            self.pot[i].place(y=pady, w=50)
-            self.pot[i].bind('<Return>', lambda event, idx=i: self.on_change_cc(event,idx))
+        for i in range(int(ENC_NB / 2) - 1):
+            self.enc_mcc += [tk.Entry()]
+            self.enc_mcc[i].place(y=pady, w=50)
+            self.enc_mcc[i].bind('<Return>', lambda event, idx=i: self.on_change_cc(event,idx))
             pady += 105
+
+        i += 1
+        # Joystick x
+        self.enc_mcc += [tk.Entry()]
+        self.enc_mcc[i].place(x=400, y=680, w=50)
+        self.enc_mcc[i].bind('<Return>', lambda event, idx=i: self.on_change_cc(event,idx))
+        lbl = tk.Label(text=": x")
+        lbl.place(x=450, y=680)
 
         # Left side text boxes
         pady=300
-        for i in range(int(POT_NB / 2), POT_NB):
-            self.pot += [tk.Entry()]
-            self.pot[i].place(relx=1, y=pady, w=50, anchor='ne')
-            self.pot[i].bind('<Return>',  lambda event, idx=i: self.on_change_cc(event,idx))
+        for i in range(int(ENC_NB / 2), ENC_NB - 1):
+            self.enc_mcc += [tk.Entry()]
+            self.enc_mcc[i].place(relx=1, y=pady, w=50, anchor='ne')
+            self.enc_mcc[i].bind('<Return>',  lambda event, idx=i: self.on_change_cc(event,idx))
             pady += 105
+
+        i += 1
+        # Joystick y
+        self.enc_mcc += [tk.Entry()]
+        self.enc_mcc[i].place(x=400, y=700, w=50)
+        self.enc_mcc[i].bind('<Return>', lambda event, idx=i: self.on_change_cc(event,idx))
+        lbl = tk.Label(text=": y")
+        lbl.place(x=450, y=700)
 
         save_btn = tk.Button(text='Save patch into EEPROM', command = self.on_save)
         save_btn.pack()
@@ -137,11 +154,11 @@ class Root:
 
         if midi_msg.type == 'sysex' and midi_msg.data[0] == SysExMsg.PATCH_STS:
             midi_cc = midi_msg.data[1:9]
-            for i in range(POT_NB):
+            for i in range(ENC_NB):
                 # Do not update an Entry that being edited
-                if self.root.focus_get() != self.pot[i]:
-                    self.pot[i].delete(0,"end")
-                    self.pot[i].insert(0, midi_cc[i])
+                if self.root.focus_get() != self.enc_mcc[i]:
+                    self.enc_mcc[i].delete(0,"end")
+                    self.enc_mcc[i].insert(0, midi_cc[i])
 
     def on_close(self):
         """
