@@ -11,14 +11,19 @@ import os
 
 # Number of encoders (XY = 2 encoders)
 ENC_NB      = 8
+# Number of buttons
+BTN_NB      = 1
+
 REQUEST_REC = 2000
 
 class SysExMsg(IntEnum):
   PATCH_REQ = 0 # Out: Request for current config
   PATCH_STS = 1 # In:  Send the current config
-  PATCH_CMD = 2 # Out: Change a patch
-  SAVE_CMD  = 3 # Out: Save the current config
-  RESET_CMD = 4 # Out: Save the current config
+  PATCH_ENC_CMD = 2 # Out: Change an encoder patch
+  PATCH_BTN_CMD = 3 # Out: Change a button patch
+  TOGGLE_BTN_CMD = 4 # Out: Change a button toggle
+  SAVE_CMD  = 5 # Out: Save the current config
+  RESET_CMD = 6 # Out: Save the current config
 
 class Root:
     midi_in = None
@@ -60,14 +65,14 @@ class Root:
         for i in range(int(ENC_NB / 2) - 1):
             self.enc_mcc += [tk.Entry()]
             self.enc_mcc[i].place(y=pady, w=50)
-            self.enc_mcc[i].bind('<Return>', lambda event, idx=i: self.on_change_cc(event,idx))
+            self.enc_mcc[i].bind('<Return>', lambda event, idx=i: self.on_change_cc(event, SysExMsg.PATCH_ENC_CMD, idx))
             pady += 105
 
         i += 1
         # Joystick x
         self.enc_mcc += [tk.Entry()]
         self.enc_mcc[i].place(x=400, y=680, w=50)
-        self.enc_mcc[i].bind('<Return>', lambda event, idx=i: self.on_change_cc(event,idx))
+        self.enc_mcc[i].bind('<Return>', lambda event, idx=i: self.on_change_cc(event, SysExMsg.PATCH_ENC_CMD, idx))
         lbl = tk.Label(text=": x")
         lbl.place(x=450, y=680)
 
@@ -76,16 +81,30 @@ class Root:
         for i in range(int(ENC_NB / 2), ENC_NB - 1):
             self.enc_mcc += [tk.Entry()]
             self.enc_mcc[i].place(relx=1, y=pady, w=50, anchor='ne')
-            self.enc_mcc[i].bind('<Return>',  lambda event, idx=i: self.on_change_cc(event,idx))
+            self.enc_mcc[i].bind('<Return>',  lambda event, idx=i: self.on_change_cc(event, SysExMsg.PATCH_ENC_CMD, idx))
             pady += 105
 
         i += 1
         # Joystick y
         self.enc_mcc += [tk.Entry()]
         self.enc_mcc[i].place(x=400, y=700, w=50)
-        self.enc_mcc[i].bind('<Return>', lambda event, idx=i: self.on_change_cc(event,idx))
+        self.enc_mcc[i].bind('<Return>', lambda event, idx=i: self.on_change_cc(event, SysExMsg.PATCH_ENC_CMD, idx))
         lbl = tk.Label(text=": y")
         lbl.place(x=450, y=700)
+
+        self.btn_mcc = []
+        self.var_tog = []
+
+        # Joystick Switch
+        self.btn_mcc += [tk.Entry()]
+        self.btn_mcc[0].place(x=400, y=720, w=50)
+        self.btn_mcc[0].bind('<Return>', lambda event, idx=0: self.on_change_cc(event, SysExMsg.PATCH_BTN_CMD, idx))
+        lbl = tk.Label(text=": sw")
+        lbl.place(x=450, y=720)
+        self.var_tog += [tk.IntVar()]
+        self.var_tog[0].trace('w', lambda *args, idx=0: self.on_change_btn_tog(idx))
+        btn_tog = tk.Checkbutton(text=': Latch', variable=self.var_tog[0])
+        btn_tog.place(x=480, y=720, w=70)
 
         save_btn = tk.Button(text='Save patch into EEPROM', command = self.on_save)
         save_btn.pack()
@@ -125,12 +144,13 @@ class Root:
             self.midi_out.close()
         self.midi_out = mido.open_output(self.output_conn.get())
 
-    def on_change_cc(self, e, idx):
+    def on_change_cc(self, e, msg, idx):
         """
         Calback to validate Entry input
-        Sends the new patch for a knob.
+        Sends the new patch for a control.
 
         @param e:   event
+        @param msg: sysex message id (PATCH_ENC_CMD or PATCH_BTN_CMD)
         @param idx: index of the Entry
         """
 
@@ -145,6 +165,13 @@ class Root:
         # Lose focus to be refreshed by the timer
         self.root.focus()
 
+    def on_change_btn_tog(self, idx):
+        tog = self.var_tog[idx].get()
+        print(str(idx) + ' => ' + str(tog))
+
+        # Send the SysEx message
+        self.midi_out.send(mido.Message('sysex', data=[SysExMsg.TOGGLE_BTN_CMD, idx, tog]))
+
     def on_midi_receive(self, midi_msg):
         """
         Callback to be called on MIDI in event.
@@ -153,12 +180,25 @@ class Root:
         """
 
         if midi_msg.type == 'sysex' and midi_msg.data[0] == SysExMsg.PATCH_STS:
-            midi_cc = midi_msg.data[1:9]
+            enc_mcc = midi_msg.data[1:ENC_NB+1]
             for i in range(ENC_NB):
                 # Do not update an Entry that being edited
                 if self.root.focus_get() != self.enc_mcc[i]:
                     self.enc_mcc[i].delete(0,"end")
-                    self.enc_mcc[i].insert(0, midi_cc[i])
+                    self.enc_mcc[i].insert(0, enc_mcc[i])
+            btn_cfg = midi_msg.data[ENC_NB+1:ENC_NB+1+BTN_NB*2]
+            for i in range(BTN_NB):
+                btn_mcc = btn_cfg[i*2]
+                btn_tog = btn_cfg[i*2+1]
+                # Do not update an Entry that being edited
+                if self.root.focus_get() != self.btn_mcc[i]:
+                    self.btn_mcc[i].delete(0,"end")
+                    self.btn_mcc[i].insert(0, btn_mcc)
+                # Remove callback on toggle
+                self.var_tog[i].trace_remove(*self.var_tog[i].trace_info()[0])
+                self.var_tog[i].set(btn_tog)
+                # Set back the callback
+                self.var_tog[i].trace('w', lambda *args,idx=i: self.on_change_btn_tog(idx))
 
     def on_close(self):
         """
