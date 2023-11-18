@@ -69,12 +69,12 @@ class Root:
             pady += 105
 
         i += 1
-        # Joystick x
+        # Joystick y
         self.enc_mcc += [tk.Entry()]
-        self.enc_mcc[i].place(x=400, y=680, w=50)
+        self.enc_mcc[i].place(x=400, y=700, w=50)
         self.enc_mcc[i].bind('<Return>', lambda event, idx=i: self.on_change_cc(event, SysExMsg.PATCH_ENC_CMD, idx))
-        lbl = tk.Label(text=": x")
-        lbl.place(x=450, y=680)
+        lbl = tk.Label(text=": y")
+        lbl.place(x=450, y=700)
 
         # Left side text boxes
         pady=300
@@ -85,12 +85,12 @@ class Root:
             pady += 105
 
         i += 1
-        # Joystick y
+        # Joystick x
         self.enc_mcc += [tk.Entry()]
-        self.enc_mcc[i].place(x=400, y=700, w=50)
+        self.enc_mcc[i].place(x=400, y=680, w=50)
         self.enc_mcc[i].bind('<Return>', lambda event, idx=i: self.on_change_cc(event, SysExMsg.PATCH_ENC_CMD, idx))
-        lbl = tk.Label(text=": y")
-        lbl.place(x=450, y=700)
+        lbl = tk.Label(text=": x")
+        lbl.place(x=450, y=680)
 
         self.btn_mcc = []
         self.var_tog = []
