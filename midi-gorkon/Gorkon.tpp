@@ -129,10 +129,12 @@ void Gorkon<NbEnc, NbBtn>::handleBtnToggleSysEx(const uint8_t* msg, unsigned siz
 template <uint8_t NbEnc, uint8_t NbBtn>
 void Gorkon<NbEnc, NbBtn>::saveConfig()
 {
+    EEPROM.update(0, this->channel);
+
     for (int i = 0; i < NbEnc; i++)
     {
         if (this->enc[i])
-            EEPROM.update(i, this->enc[i]->getAddress().getAddress());
+            EEPROM.update(1+i, this->enc[i]->getAddress().getAddress());
     }
 
     for (int i = 0; i < NbBtn; i++)
@@ -140,17 +142,22 @@ void Gorkon<NbEnc, NbBtn>::saveConfig()
         uint8_t mcc = default_btn_mcc[i];
         if (this->btn[i])
             mcc = this->btn[i]->getAddress().getAddress();
-        EEPROM.update(NbEnc+i,   mcc);
-        EEPROM.update(NbEnc+i+1, btn[i]->isToggle());
+        EEPROM.update(1+NbEnc+i,   mcc);
+        EEPROM.update(1+NbEnc+i+1, btn[i]->isToggle());
     }
+#ifdef GK_DEBUG
+    Serial << "Config saved." << endl;
+#endif
 }
 
 template <uint8_t NbEnc, uint8_t NbBtn>
 void Gorkon<NbEnc, NbBtn>::restoreConfig()
 {
+    this->channel = EEPROM.read(0);
+
     for (int i = 0; i < NbEnc; i++)
     {
-        uint8_t mcc = EEPROM.read(i);
+        uint8_t mcc = EEPROM.read(1+i);
         if (mcc > 127)
             mcc = default_enc_mcc[i];
 
@@ -159,8 +166,8 @@ void Gorkon<NbEnc, NbBtn>::restoreConfig()
 
     for (int i = 0; i < NbBtn; i++)
     {
-        uint8_t mcc = EEPROM.read(NbEnc+i);
-        uint8_t tog = EEPROM.read(NbEnc+i+1);
+        uint8_t mcc = EEPROM.read(1+NbEnc+i);
+        uint8_t tog = EEPROM.read(1+NbEnc+i+1);
         if (mcc > 127)
             mcc = default_btn_mcc[i];
         if (tog > 127)
