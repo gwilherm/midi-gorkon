@@ -1,6 +1,8 @@
 #ifndef GORKON_HPP
 #define GORKON_HPP
 
+#include <Adafruit_NeoPixel.h>
+
 #include "GkCCEncoder.hpp"
 #include "GkCCButton.hpp"
 #include "sysex_proto.h"
@@ -30,6 +32,8 @@ protected:
     void saveConfig();
     void restoreConfig();
     void resetConfig();
+    void handlePianoModeSwitch();
+    void pianoRGBColorFade(uint8_t r, uint8_t g, uint8_t b);
 
 #ifdef GK_DEBUG
     void dumpConfig();
@@ -48,8 +52,14 @@ private:
     uint8_t default_btn_mcc[NbBtn];
     bool    default_btn_tog[NbBtn];
 
-    GkCCEncoder* enc[NbEnc];
-    GkCCButton*  btn[NbBtn];
+    GkCCEncoder*  enc[NbEnc];
+    GkCCButton*   btn[NbBtn];
+    TouchpadPiano piano;
+    Adafruit_NeoPixel pianoRGB;
+
+    int pianoModeSwitchState = HIGH;
+    unsigned long pianoModeSwitchLastDebounceTime = 0;
+
 
     uint8_t channel;
 };

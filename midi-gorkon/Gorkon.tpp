@@ -3,12 +3,21 @@
 
 #include "Gorkon.hpp"
 
+#define SDO_PIN 2
+#define SCL_PIN 3
+#define RGB_PIN 4
+#define BTN_PIN 16
+#define LED_COUNT 4
+
 USBMIDI_Interface midi;  // Instantiate a MIDI Interface to use
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-Gorkon<NbEnc, NbBtn>::Gorkon( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
-                                   const uint8_t (&btn_pin)[NbBtn], const uint8_t (&btn_mcc)[NbBtn],
-                                   const bool    (&btn_tog)[NbBtn]):
+Gorkon<NbEnc, NbBtn>::
+Gorkon( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
+        const uint8_t (&btn_pin)[NbBtn], const uint8_t (&btn_mcc)[NbBtn],
+        const bool    (&btn_tog)[NbBtn]):
+    piano(SCL_PIN, SDO_PIN, MIDI_Notes::C(4)),
+    pianoRGB(LED_COUNT, RGB_PIN, NEO_GRB + NEO_KHZ800),
     channel(0)
 {
     char *copy = strdup(GK_VERSION);
@@ -41,6 +50,12 @@ void Gorkon<NbEnc, NbBtn>::begin()
     dumpConfig();
 #endif
 
+    pinMode(BTN_PIN, INPUT_PULLUP);
+
+    pianoRGB.begin();           // INITIALIZE NeoPixel pianoRGB object (REQUIRED)
+    pianoRGB.show();            // Turn OFF all pixels ASAP
+    pianoRGB.setBrightness(10);
+
     Control_Surface.begin();  // Initialize the Control Surface
     midi.begin();
     midi.setCallbacks(this);
@@ -48,10 +63,12 @@ void Gorkon<NbEnc, NbBtn>::begin()
 
 template <uint8_t NbEnc, uint8_t NbBtn>
 void Gorkon<NbEnc, NbBtn>::update()
-{
-  Control_Surface.loop();  // Update the Control Surface
+{   
+    handlePianoModeSwitch();
 
-  midi.update();
+    Control_Surface.loop();  // Update the Control Surface
+
+    midi.update();
 }
 
 template <uint8_t NbEnc, uint8_t NbBtn>
@@ -253,7 +270,8 @@ void Gorkon<NbEnc, NbBtn>::dumpConfig()
 
 // This callback function is called when a SysEx message is received.
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::onSysExMessage(MIDI_Interface &, SysExMessage sysex) {
+void Gorkon<NbEnc, NbBtn>::onSysExMessage(MIDI_Interface &, SysExMessage sysex)
+{
 #ifdef GK_DEBUG
     // Print the message
     Serial << F("Received SysEx message: ")         //
@@ -289,5 +307,64 @@ void Gorkon<NbEnc, NbBtn>::onSysExMessage(MIDI_Interface &, SysExMessage sysex) 
         break;
     default:
         break;
+    }
+}
+
+template <uint8_t NbEnc, uint8_t NbBtn>
+void Gorkon<NbEnc, NbBtn>::handlePianoModeSwitch()
+{
+    int newBtnState = digitalRead(BTN_PIN);
+    if ((millis() - this->pianoModeSwitchLastDebounceTime) > 70)
+    {
+        if ((this->pianoModeSwitchState == LOW) && (newBtnState == HIGH))
+        {
+            switch (piano.getMode())
+            {
+            case PianoMode::Standard:
+#ifdef GK_DEBUG
+                Serial.println("Hold");
+#endif
+                piano.setMode(PianoMode::Hold);
+                pianoRGBColorFade( 25, 210,  25); // fade into green
+                break;
+            case PianoMode::Hold:
+#ifdef GK_DEBUG
+                Serial.println("Monodic");
+#endif
+                piano.setMode(PianoMode::Monodic);
+                pianoRGBColorFade( 25,  25, 210); // fade into blue
+                break;
+            case PianoMode::Monodic:
+#ifdef GK_DEBUG
+                Serial.println("Standard");
+#endif
+                piano.setMode(PianoMode::Standard);
+                pianoRGBColorFade(  0,   0,   0); // fade into black
+                break;
+            }
+        }
+        this->pianoModeSwitchState = newBtnState;
+        this->pianoModeSwitchLastDebounceTime = millis();
+    }
+}
+
+
+template <uint8_t NbEnc, uint8_t NbBtn>
+void Gorkon<NbEnc, NbBtn>::pianoRGBColorFade(uint8_t r, uint8_t g, uint8_t b)
+{
+    uint8_t curr_r, curr_g, curr_b;
+    uint32_t curr_col = pianoRGB.getPixelColor(0); // get the current colour
+    curr_b = curr_col & 0xFF; curr_g = (curr_col >> 8) & 0xFF; curr_r = (curr_col >> 16) & 0xFF; // separate into RGB components
+
+    while ((curr_r != r) || (curr_g != g) || (curr_b != b)){  // while the curr color is not yet the target color
+        if (curr_r < r) curr_r++; else if (curr_r > r) curr_r--;  // increment or decrement the old color values
+        if (curr_g < g) curr_g++; else if (curr_g > g) curr_g--;
+        if (curr_b < b) curr_b++; else if (curr_b > b) curr_b--;
+
+        for(uint16_t i = 0; i < pianoRGB.numPixels(); i++)
+            pianoRGB.setPixelColor(i, curr_r, curr_g, curr_b);  // set the color
+
+        pianoRGB.show();
+        delay(1);  // add a delay if its too fast
     }
 }
