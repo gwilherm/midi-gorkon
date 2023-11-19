@@ -35,6 +35,8 @@ void Gorkon<NbEnc, NbBtn>::sendPatchStatus()
     sts.sts.syx_ftr = SysExProto::SysExEnd;
     sts.sts.msg_idx = SysExProto::PATCH_STS;
 
+    sts.sts.channel = this->channel;
+
     for (int i = 0; i < NbEnc; i++)
         if (this->enc[i])
             sts.sts.enc_mcc[i] = this->enc[i]->getAddress().getAddress();
@@ -49,6 +51,34 @@ void Gorkon<NbEnc, NbBtn>::sendPatchStatus()
     }
 
     midi.sendSysEx(sts.array);
+}
+
+template <uint8_t NbEnc, uint8_t NbBtn>
+void Gorkon<NbEnc, NbBtn>::handleChangeChannelSysEx(const uint8_t* msg, unsigned size)
+{
+    if (size == sizeof(SysExProto::change_chan_cmd_t))
+    {
+        uint8_t newChan = ((SysExProto::change_chan_cmd_t*)msg)->channel;
+        if (newChan <= 15)
+        {
+#ifdef GK_DEBUG
+            Serial << "Channel = " << newChan << endl;
+#endif
+            // Change all component channel
+            for (int i = 0; i < NbEnc; i++)
+                if (this->enc[i])
+                    this->enc[i]->setAddress(
+                         { this->enc[i]->getAddress().getAddress(), Channel(newChan)});
+
+            for (int i = 0; i < NbBtn; i++)
+                if (this->btn[i])
+                    this->btn[i]->setAddressUnsafe(
+                         { this->btn[i]->getAddress().getAddress(), Channel(newChan)});
+
+
+            this->channel = newChan;
+        }
+    }
 }
 
 template <uint8_t NbEnc, uint8_t NbBtn>
@@ -143,6 +173,8 @@ void Gorkon<NbEnc, NbBtn>::restoreConfig()
 template <uint8_t NbEnc, uint8_t NbBtn>
 void Gorkon<NbEnc, NbBtn>::resetConfig()
 {
+    this->channel = 0;
+
     for (int i = 0; i < NbEnc; i++)
         if (this->enc[i])
             this->enc[i]->setAddress(default_enc_mcc[i]);
@@ -159,6 +191,7 @@ void Gorkon<NbEnc, NbBtn>::resetConfig()
 template <uint8_t NbEnc, uint8_t NbBtn>
 void Gorkon<NbEnc, NbBtn>::dumpConfig()
 {
+    Serial << "Channel = " << this->channel << endl;
     for (int i = 0; i < NbEnc; i++)
     {
         Serial << "Enc[" << i << "] (pin:" << enc_pin[i] << ")"
@@ -201,6 +234,9 @@ void Gorkon<NbEnc, NbBtn>::onSysExMessage(MIDI_Interface &, SysExMessage sysex) 
         break;
     case SysExProto::TOGGLE_BTN_CMD:
         handleBtnToggleSysEx(sysex.data, sysex.length);
+        break;
+    case SysExProto::CHANGE_CHAN_CMD:
+        handleChangeChannelSysEx(sysex.data, sysex.length);
         break;
     case SysExProto::SAVE_CMD:
         saveConfig();

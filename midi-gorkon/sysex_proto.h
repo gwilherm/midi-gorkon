@@ -7,13 +7,14 @@ namespace SysExProto {
 
     enum
     {
-        PATCH_REQ,      // In:  Request for current configuration
-        PATCH_STS,      // Out: Send configuration
-        PATCH_ENC_CMD,  // In:  Change a enc patch
-        PATCH_BTN_CMD,  // In:  Change a button patch
-        TOGGLE_BTN_CMD, // In:  Change a button toggle
-        SAVE_CMD,       // In:  Save current configuration command
-        RESET_CMD       // In:  Restore default configuration
+        PATCH_REQ,       // In:  Request for current configuration
+        PATCH_STS,       // Out: Send configuration
+        PATCH_ENC_CMD,   // In:  Change an encoder patch
+        PATCH_BTN_CMD,   // In:  Change a button patch
+        TOGGLE_BTN_CMD,  // In:  Change a button toggle
+        CHANGE_CHAN_CMD, // In:  Change the midi channel
+        SAVE_CMD,        // In:  Save current configuration command
+        RESET_CMD        // In:  Restore default configuration
     };
 
     typedef struct
@@ -29,6 +30,7 @@ namespace SysExProto {
         {
             uint8_t syx_hdr; // 0xF0
             uint8_t msg_idx;
+            uint8_t channel;
             uint8_t enc_mcc[NbEnc];
             btn_t   btn_cfg[NbBtn];
             uint8_t syx_ftr; // 0xF7
@@ -45,6 +47,14 @@ namespace SysExProto {
         uint8_t ctl_val;
         uint8_t syx_ftr; // 0xF7
     } patch_cmd_t;
+
+    typedef struct
+    {
+        uint8_t syx_hdr; // 0xF0
+        uint8_t msg_idx;
+        uint8_t channel;
+        uint8_t syx_ftr; // 0xF7
+    } change_chan_cmd_t;
 };
 
 #endif // SYSEX_PROTO_H

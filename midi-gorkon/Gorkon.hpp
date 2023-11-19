@@ -11,7 +11,8 @@ class Gorkon : MIDI_Callbacks
 public:
     Gorkon( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
             const uint8_t (&btn_pin)[NbBtn], const uint8_t (&btn_mcc)[NbBtn],
-            const bool    (&btn_tog)[NbBtn])
+            const bool    (&btn_tog)[NbBtn]) :
+        channel(0)
     {
         for (int i = 0; i < NbEnc; i++)
         {
@@ -38,6 +39,7 @@ protected:
     void handleEncPatchSysEx(const uint8_t* array, unsigned size);
     void handleBtnPatchSysEx(const uint8_t* array, unsigned size);
     void handleBtnToggleSysEx(const uint8_t* array, unsigned size);
+    void handleChangeChannelSysEx(const uint8_t* msg, unsigned size);
     void sendPatchStatus();
     void saveConfig();
     void restoreConfig();
@@ -61,6 +63,8 @@ private:
 
     GkCCEncoder* enc[NbEnc];
     GkCCButton*  btn[NbBtn];
+
+    uint8_t channel;
 };
 
 #include "Gorkon.tpp"

@@ -22,8 +22,9 @@ class SysExMsg(IntEnum):
   PATCH_ENC_CMD = 2 # Out: Change an encoder patch
   PATCH_BTN_CMD = 3 # Out: Change a button patch
   TOGGLE_BTN_CMD = 4 # Out: Change a button toggle
-  SAVE_CMD  = 5 # Out: Save the current config
-  RESET_CMD = 6 # Out: Save the current config
+  CHANGE_CHAN_CMD = 5 # Out: Change the midi channel
+  SAVE_CMD  = 6 # Out: Save the current config
+  RESET_CMD = 7 # Out: Save the current config
 
 class Root:
     midi_in = None
@@ -57,6 +58,12 @@ class Root:
         self.ddin.place(y=10, w=200)
         self.ddout = tk.OptionMenu(self.root, self.output_conn, value='')
         self.ddout.place(relx=1, y=10, w=200, anchor='ne')
+
+        lbl = tk.Label(text="Channel:")
+        lbl.place(y=130)
+        self.channel = tk.Entry()
+        self.channel.place(y=150, w=50)
+        self.channel.bind('<Return>', lambda event: self.on_change_chan(event))
 
         self.enc_mcc = []
 
@@ -144,6 +151,28 @@ class Root:
             self.midi_out.close()
         self.midi_out = mido.open_output(self.output_conn.get())
 
+    def on_change_chan(self, e):
+        """
+        Calback to validate channel input
+        Sends the new channel.
+
+        @param e:   event
+        """
+        if self.midi_out:
+            # Get the Entry value
+            midi_chan = e.widget.get()
+            if int(midi_chan) > 15:
+                print("bad channel value: " + midi_chan)
+                return
+            print('MIDI Channel => ' + midi_chan)
+
+            # Send the SysEx message
+            self.midi_out.send(mido.Message('sysex', data=[SysExMsg.CHANGE_CHAN_CMD, int(midi_chan)]))
+
+        # Lose focus to be refreshed by the timer
+        self.root.focus()
+
+
     def on_change_cc(self, e, msg, idx):
         """
         Calback to validate Entry input
@@ -158,7 +187,7 @@ class Root:
             # Get the Entry value
             midi_cc = e.widget.get()
             if int(midi_cc) > 127:
-                print("badd CC value: " + midi_cc)
+                print("bad CC value: " + midi_cc)
                 return
             print(msg.name + '[' + str(idx) + '] => ' + midi_cc)
 
@@ -183,13 +212,16 @@ class Root:
         """
 
         if midi_msg.type == 'sysex' and midi_msg.data[0] == SysExMsg.PATCH_STS:
-            enc_mcc = midi_msg.data[1:ENC_NB+1]
+            if self.root.focus_get() != self.channel:
+                self.channel.delete(0,"end")
+                self.channel.insert(0, midi_msg.data[1])
+            enc_mcc = midi_msg.data[2:ENC_NB+2]
             for i in range(ENC_NB):
                 # Do not update an Entry that being edited
                 if self.root.focus_get() != self.enc_mcc[i]:
                     self.enc_mcc[i].delete(0,"end")
                     self.enc_mcc[i].insert(0, enc_mcc[i])
-            btn_cfg = midi_msg.data[ENC_NB+1:ENC_NB+1+BTN_NB*2]
+            btn_cfg = midi_msg.data[ENC_NB+2:ENC_NB+2+BTN_NB*2]
             for i in range(BTN_NB):
                 btn_mcc = btn_cfg[i*2]
                 btn_tog = btn_cfg[i*2+1]
