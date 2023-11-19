@@ -43,6 +43,10 @@ protected:
     void restoreConfig();
     void resetConfig();
 
+#ifdef GK_DEBUG
+    void dumpConfig();
+#endif
+
     // MIDI_Callbacks
     void onSysExMessage(MIDI_Interface &, SysExMessage sysex) override;
 

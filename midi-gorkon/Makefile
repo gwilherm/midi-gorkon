@@ -9,5 +9,6 @@ ARDUINO_LIBS+= Control-Surface MIDIUSB
 ARDUINO_VERSION = 10819
 
 CPPFLAGS = -DUSB_PRODUCT='"Gorkon"'
+#CPPFLAGS+= -DGK_DEBUG
 
 include /usr/share/arduino/Arduino.mk

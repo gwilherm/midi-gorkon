@@ -10,6 +10,10 @@ void Gorkon<NbEnc, NbBtn>::begin()
 {
     restoreConfig();
 
+#ifdef GK_DEBUG
+    dumpConfig();
+#endif
+
     Control_Surface.begin();  // Initialize the Control Surface
     midi.begin();
     midi.setCallbacks(this);
@@ -150,6 +154,27 @@ void Gorkon<NbEnc, NbBtn>::resetConfig()
         this->btn[i] = new GkCCButton(btn_pin[i], mcc, tog);
     }
 }
+
+#ifdef GK_DEBUG
+template <uint8_t NbEnc, uint8_t NbBtn>
+void Gorkon<NbEnc, NbBtn>::dumpConfig()
+{
+    for (int i = 0; i < NbEnc; i++)
+    {
+        Serial << "Enc[" << i << "] (pin:" << enc_pin[i] << ")"
+            << " => MCC = " << this->enc[i]->getAddress().getAddress()
+            << endl;
+    }
+
+    for (int i = 0; i < NbBtn; i++)
+    {
+        Serial << "Btn[" << i << "] (pin:" << btn_pin[i] << ")"
+            << " => MCC = " << this->btn[i]->getAddress().getAddress()
+            << " -- TOG = " << this->btn[i]->isToggle()
+            << endl;
+    }
+}
+#endif
 
 // This callback function is called when a SysEx message is received.
 template <uint8_t NbEnc, uint8_t NbBtn>
