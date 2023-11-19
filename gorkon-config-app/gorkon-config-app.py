@@ -157,10 +157,13 @@ class Root:
         if self.midi_out:
             # Get the Entry value
             midi_cc = e.widget.get()
-            print(str(idx) + ' => ' + midi_cc)
+            if int(midi_cc) > 127:
+                print("badd CC value: " + midi_cc)
+                return
+            print(msg.name + '[' + str(idx) + '] => ' + midi_cc)
 
             # Send the SysEx message
-            self.midi_out.send(mido.Message('sysex', data=[SysExMsg.PATCH_CMD, idx, int(midi_cc)]))
+            self.midi_out.send(mido.Message('sysex', data=[msg, idx, int(midi_cc)]))
 
         # Lose focus to be refreshed by the timer
         self.root.focus()
