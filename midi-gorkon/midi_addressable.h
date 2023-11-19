@@ -1,3 +1,6 @@
+#ifndef MIDI_ADDRESSABLE_H
+#define MIDI_ADDRESSABLE_H
+
 #include <Control_Surface.h>
 
 struct MIDIAddressable {
@@ -15,3 +18,5 @@ MIDIAddressable *make_addressable(Args &&... args) {
   };
   return new MIDIAddressableT(std::forward<Args>(args)...);
 }
+
+#endif // MIDI_ADDRESSABLE_H
