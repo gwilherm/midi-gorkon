@@ -98,6 +98,8 @@ void Gorkon<NbEnc, NbBtn>::sendPatchStatus()
         }
     }
 
+    sts.sts.st_note = this->piano.getBaseAddress().getAddress();
+
     midi.sendSysEx(sts.array);
 }
 
@@ -115,20 +117,44 @@ void Gorkon<NbEnc, NbBtn>::handleChangeChannelSysEx(const uint8_t* msg, unsigned
             // Change all component channel
             for (int i = 0; i < NbEnc; i++)
                 if (this->enc[i])
-                    this->enc[i]->setAddress(
-                         { this->enc[i]->getAddress().getAddress(), Channel(newChan)});
+                    this->enc[i]->setAddress({
+                        this->enc[i]->getAddress().getAddress(),
+                        Channel(newChan)
+                    });
 
             for (int i = 0; i < NbBtn; i++)
                 if (this->btn[i])
-                    this->btn[i]->setAddressUnsafe(
-                         { this->btn[i]->getAddress().getAddress(), Channel(newChan)});
+                    this->btn[i]->setAddressUnsafe({
+                        this->btn[i]->getAddress().getAddress(),
+                        Channel(newChan)
+                    });
 
+            this->piano.setBaseAddressUnsafe({
+                this->piano.getBaseAddress().getAddress(),
+                Channel(newChan)
+            });
 
             this->channel = newChan;
         }
     }
 }
 
+template <uint8_t NbEnc, uint8_t NbBtn>
+void Gorkon<NbEnc, NbBtn>::handleChangeStartNoteSysEx(const uint8_t* msg, unsigned size)
+{
+    if (size == sizeof(SysExProto::change_start_note_cmd_t))
+    {
+        uint8_t startNote = ((SysExProto::change_start_note_cmd_t*)msg)->st_note;
+        if (startNote <= 127)
+        {
+#ifdef GK_DEBUG
+            Serial << "Start note = " << startNote << endl;
+#endif
+
+            this->piano.setBaseAddressUnsafe({startNote, Channel(this->channel)});
+        }
+    }
+}
 template <uint8_t NbEnc, uint8_t NbBtn>
 void Gorkon<NbEnc, NbBtn>::handleEncPatchSysEx(const uint8_t* msg, unsigned size)
 {
@@ -298,6 +324,9 @@ void Gorkon<NbEnc, NbBtn>::onSysExMessage(MIDI_Interface &, SysExMessage sysex)
         break;
     case SysExProto::CHANGE_CHAN_CMD:
         handleChangeChannelSysEx(sysex.data, sysex.length);
+        break;
+    case SysExProto::CHANGE_START_NOTE_CMD:
+        handleChangeStartNoteSysEx(sysex.data, sysex.length);
         break;
     case SysExProto::SAVE_CMD:
         saveConfig();

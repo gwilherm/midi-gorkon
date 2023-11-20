@@ -28,6 +28,7 @@ protected:
     void handleBtnPatchSysEx(const uint8_t* array, unsigned size);
     void handleBtnToggleSysEx(const uint8_t* array, unsigned size);
     void handleChangeChannelSysEx(const uint8_t* msg, unsigned size);
+    void handleChangeStartNoteSysEx(const uint8_t* msg, unsigned size);
     void sendPatchStatus();
     void saveConfig();
     void restoreConfig();
