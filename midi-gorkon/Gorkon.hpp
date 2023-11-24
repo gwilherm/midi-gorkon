@@ -7,6 +7,13 @@
 #include "GkCCButton.hpp"
 #include "sysex_proto.h"
 
+typedef struct 
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} rgb_t;
+
 template <uint8_t NbEnc, uint8_t NbBtn>
 class Gorkon : MIDI_Callbacks
 {
@@ -34,7 +41,7 @@ protected:
     void restoreConfig();
     void resetConfig();
     void handlePianoModeSwitch();
-    void pianoRGBColorFade(uint8_t r, uint8_t g, uint8_t b);
+    void pianoRGBColorFade();
 
 #ifdef GK_DEBUG
     void dumpConfig();
@@ -57,6 +64,10 @@ private:
     GkCCButton*   btn[NbBtn];
     TouchpadPiano piano;
     Adafruit_NeoPixel pianoRGB;
+
+    rgb_t targetColor = {0, 0, 0};
+    rgb_t currColor   = {0, 0, 0};
+    AH::Timer<millis> rgbFadeTimer;
 
     int pianoModeSwitchState = HIGH;
     unsigned long pianoModeSwitchLastDebounceTime = 0;

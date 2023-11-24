@@ -18,6 +18,7 @@ Gorkon( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
         const bool    (&btn_tog)[NbBtn]):
     piano(SCL_PIN, SDO_PIN, MIDI_Notes::C(4)),
     pianoRGB(LED_COUNT, RGB_PIN, NEO_GRB + NEO_KHZ800),
+    rgbFadeTimer(3),
     channel(0)
 {
     char *copy = strdup(GK_VERSION);
@@ -69,6 +70,8 @@ void Gorkon<NbEnc, NbBtn>::update()
     Control_Surface.loop();  // Update the Control Surface
 
     midi.update();
+
+    pianoRGBColorFade();
 }
 
 template <uint8_t NbEnc, uint8_t NbBtn>
@@ -354,21 +357,21 @@ void Gorkon<NbEnc, NbBtn>::handlePianoModeSwitch()
                 Serial.println("Hold");
 #endif
                 piano.setMode(PianoMode::Hold);
-                pianoRGBColorFade( 25, 210,  25); // fade into green
+                this->targetColor = { 25, 210,  25}; // fade into green
                 break;
             case PianoMode::Hold:
 #ifdef GK_DEBUG
                 Serial.println("Monodic");
 #endif
                 piano.setMode(PianoMode::Monodic);
-                pianoRGBColorFade( 25,  25, 210); // fade into blue
+                this->targetColor = { 25,  25, 210}; // fade into blue
                 break;
             case PianoMode::Monodic:
 #ifdef GK_DEBUG
                 Serial.println("Standard");
 #endif
                 piano.setMode(PianoMode::Standard);
-                pianoRGBColorFade(  0,   0,   0); // fade into black
+                this->targetColor = {  0,   0,   0}; // fade into black
                 break;
             }
         }
@@ -379,21 +382,22 @@ void Gorkon<NbEnc, NbBtn>::handlePianoModeSwitch()
 
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::pianoRGBColorFade(uint8_t r, uint8_t g, uint8_t b)
+void Gorkon<NbEnc, NbBtn>::pianoRGBColorFade()
 {
-    uint8_t curr_r, curr_g, curr_b;
-    uint32_t curr_col = pianoRGB.getPixelColor(0); // get the current colour
-    curr_b = curr_col & 0xFF; curr_g = (curr_col >> 8) & 0xFF; curr_r = (curr_col >> 16) & 0xFF; // separate into RGB components
+    if(!this->rgbFadeTimer) return;
+    uint8_t r      = targetColor.r;
+    uint8_t g      = targetColor.g;
+    uint8_t b      = targetColor.b;
 
-    while ((curr_r != r) || (curr_g != g) || (curr_b != b)){  // while the curr color is not yet the target color
-        if (curr_r < r) curr_r++; else if (curr_r > r) curr_r--;  // increment or decrement the old color values
-        if (curr_g < g) curr_g++; else if (curr_g > g) curr_g--;
-        if (curr_b < b) curr_b++; else if (curr_b > b) curr_b--;
+    if ((currColor.r != r) || (currColor.g != g) || (currColor.b != b)){  // while the curr color is not yet the target color
+        if (currColor.r < r) currColor.r++; else if (currColor.r > r) currColor.r--;  // increment or decrement the old color values
+        if (currColor.g < g) currColor.g++; else if (currColor.g > g) currColor.g--;
+        if (currColor.b < b) currColor.b++; else if (currColor.b > b) currColor.b--;
 
         for(uint16_t i = 0; i < pianoRGB.numPixels(); i++)
-            pianoRGB.setPixelColor(i, curr_r, curr_g, curr_b);  // set the color
+            pianoRGB.setPixelColor(i, currColor.r, currColor.g, currColor.b);  // set the color
 
         pianoRGB.show();
-        delay(1);  // add a delay if its too fast
     }
+    this->rgbFadeTimer.beginNextPeriod();
 }
