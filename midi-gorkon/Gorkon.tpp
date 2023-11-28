@@ -3,10 +3,10 @@
 
 #include "Gorkon.hpp"
 
+#define BTN_PIN 1
 #define SDO_PIN 2
 #define SCL_PIN 3
 #define RGB_PIN 4
-#define BTN_PIN 16
 #define LED_COUNT 4
 
 USBMIDI_Interface midi;  // Instantiate a MIDI Interface to use
