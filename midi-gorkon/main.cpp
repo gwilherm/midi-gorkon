@@ -10,7 +10,7 @@
 Gorkon<ENC_NB, BTN_NB> gk(  { A10, A9, A8, A7,
                               A0,  A1, A2, A3 },
                             // Encoders default MIDI CC
-                            { MIDI_CC::Sound_Controller_2, MIDI_CC::Sound_Controller_4, MIDI_CC::Portamento_Time,  MIDI_CC::Effects_1, 
+                            { MIDI_CC::Sound_Controller_2, MIDI_CC::Sound_Controller_3, MIDI_CC::Portamento_Time,  MIDI_CC::Effects_1, 
                               MIDI_CC::Sound_Controller_5, MIDI_CC::Sound_Controller_4, MIDI_CC::Effects_4,        MIDI_CC::Pan },
                             // Buttons pins
                             { 4 },
@@ -18,7 +18,8 @@ Gorkon<ENC_NB, BTN_NB> gk(  { A10, A9, A8, A7,
                             { MIDI_CC::Portamento },
                             // Buttons default toggle
                             { true }
-                        );
+);
+
 void setup()
 {
 #ifdef GK_DEBUG
