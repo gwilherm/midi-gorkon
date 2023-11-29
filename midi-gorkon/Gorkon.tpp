@@ -6,8 +6,37 @@
 USBMIDI_Interface midi;  // Instantiate a MIDI Interface to use
 
 template <uint8_t NbEnc, uint8_t NbBtn>
+Gorkon<NbEnc, NbBtn>::Gorkon( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
+                                   const uint8_t (&btn_pin)[NbBtn], const uint8_t (&btn_mcc)[NbBtn],
+                                   const bool    (&btn_tog)[NbBtn]):
+    channel(0)
+{
+    char *copy = strdup(GK_VERSION);
+
+    this->fw_version = {
+        .major =  static_cast<uint8_t>(atoi(strtok(copy, "."))),
+        .minor =  static_cast<uint8_t>(atoi(strtok(NULL, "."))),
+        .patch = static_cast<uint16_t>(atoi(strtok(NULL, ".")))
+    };
+
+    for (int i = 0; i < NbEnc; i++)
+    {
+        this->enc_pin[i] = enc_pin[i];
+        this->default_enc_mcc[i] = enc_mcc[i];
+    }
+    for (int i = 0; i < NbBtn; i++)
+    {
+        this->btn_pin[i] = btn_pin[i];
+        this->default_btn_mcc[i] = btn_mcc[i];
+        this->default_btn_tog[i] = btn_tog[i];
+    }
+}
+
+template <uint8_t NbEnc, uint8_t NbBtn>
 void Gorkon<NbEnc, NbBtn>::begin()
 {
+    Serial << "Firmware version: " << GK_VERSION << endl;
+
     restoreConfig();
 
 #ifdef GK_DEBUG
@@ -33,8 +62,10 @@ void Gorkon<NbEnc, NbBtn>::sendPatchStatus()
     SysExProto::patch_sts_u<NbEnc, NbBtn> sts;
     sts.sts.syx_hdr = SysExProto::SysExStart;
     sts.sts.syx_ftr = SysExProto::SysExEnd;
+    sts.sts.manu_id = SysExProto::ManuId;
     sts.sts.msg_idx = SysExProto::PATCH_STS;
 
+    sts.sts.fw_ver  = this->fw_version;
     sts.sts.channel = this->channel;
 
     for (int i = 0; i < NbEnc; i++)
@@ -226,9 +257,10 @@ void Gorkon<NbEnc, NbBtn>::onSysExMessage(MIDI_Interface &, SysExMessage sysex) 
             << F(" on cable ") << sysex.cable.getOneBased() << endl;
 #endif
 
-    if (sysex.length < 1) return;
+    if (sysex.length < 2) return;
+    if (sysex.data[1] != SysExProto::ManuId) return;
 
-    switch (sysex.data[1])
+    switch (sysex.data[2])
     {
     case SysExProto::PATCH_REQ:
         sendPatchStatus();

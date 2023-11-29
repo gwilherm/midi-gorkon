@@ -4,6 +4,7 @@
 namespace SysExProto {
     constexpr static const uint8_t SysExStart = 0xF0;
     constexpr static const uint8_t SysExEnd   = 0xF7;
+    constexpr static const uint8_t ManuId     = 0x7D;
 
     enum
     {
@@ -23,13 +24,22 @@ namespace SysExProto {
         bool    tog; // Is toggle button
     } btn_t;
 
+    typedef struct svt
+    {
+        uint8_t  major;
+        uint8_t  minor;
+        uint16_t patch;
+    } semver_t;
+
     template<uint8_t NbEnc, uint8_t NbBtn>
     union patch_sts_u
     {
         struct msg
         {
             uint8_t syx_hdr; // 0xF0
+            uint8_t manu_id; // Manufacturer ID 7D: prototyping a,d private use.
             uint8_t msg_idx;
+            semver_t fw_ver;
             uint8_t channel;
             uint8_t enc_mcc[NbEnc];
             btn_t   btn_cfg[NbBtn];

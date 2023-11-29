@@ -22,8 +22,8 @@ Gorkon<ENC_NB, BTN_NB> gk(  { A10, A9, A8, A7,
 
 void setup()
 {
-#ifdef GK_DEBUG
     Serial.begin(9600);
+#ifdef GK_DEBUG
     while (!Serial);
 
     Serial.println("setup");

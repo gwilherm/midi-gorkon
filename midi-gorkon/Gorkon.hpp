@@ -11,21 +11,7 @@ class Gorkon : MIDI_Callbacks
 public:
     Gorkon( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
             const uint8_t (&btn_pin)[NbBtn], const uint8_t (&btn_mcc)[NbBtn],
-            const bool    (&btn_tog)[NbBtn]) :
-        channel(0)
-    {
-        for (int i = 0; i < NbEnc; i++)
-        {
-            this->enc_pin[i] = enc_pin[i];
-            this->default_enc_mcc[i] = enc_mcc[i];
-        }
-        for (int i = 0; i < NbBtn; i++)
-        {
-            this->btn_pin[i] = btn_pin[i];
-            this->default_btn_mcc[i] = btn_mcc[i];
-            this->default_btn_tog[i] = btn_tog[i];
-        }
-    };
+            const bool    (&btn_tog)[NbBtn]);
 
 public:
     void begin();
@@ -54,6 +40,7 @@ protected:
 
 
 private:
+    SysExProto::semver_t fw_version;
     uint8_t enc_pin[NbEnc];
     uint8_t default_enc_mcc[NbEnc];
     

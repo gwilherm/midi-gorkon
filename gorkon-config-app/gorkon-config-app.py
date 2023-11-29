@@ -16,6 +16,8 @@ BTN_NB      = 1
 
 REQUEST_REC = 2000
 
+MANU_ID = 0x7D
+
 class SysExMsg(IntEnum):
   PATCH_REQ = 0 # Out: Request for current config
   PATCH_STS = 1 # In:  Send the current config
@@ -113,11 +115,16 @@ class Root:
         btn_tog = tk.Checkbutton(text=': Latch', variable=self.var_tog[0])
         btn_tog.place(x=480, y=720, w=70)
 
-        save_btn = tk.Button(text='Save patch into EEPROM', command = self.on_save)
+        save_btn = tk.Button(text='Flash the patch', command = self.on_save)
         save_btn.pack()
         
-        save_btn = tk.Button(text='Reset to default config', command = self.on_reset)
+        save_btn = tk.Button(text='Factory reset', command = self.on_reset)
         save_btn.pack()
+        
+        self.fw_version = tk.StringVar()
+        self.fw_version.set('Not Connected.')
+        lbl = tk.Label(textvariable=self.fw_version)
+        lbl.pack()
         
         # Initialize MIDI ports
         if self.input_conn.get():
@@ -192,7 +199,7 @@ class Root:
             print(msg.name + '[' + str(idx) + '] => ' + midi_cc)
 
             # Send the SysEx message
-            self.midi_out.send(mido.Message('sysex', data=[msg, idx, int(midi_cc)]))
+            self.midi_out.send(mido.Message('sysex', data=[MANU_ID, msg, idx, int(midi_cc)]))
 
         # Lose focus to be refreshed by the timer
         self.root.focus()
@@ -202,7 +209,7 @@ class Root:
         print(str(idx) + ' => ' + str(tog))
 
         # Send the SysEx message
-        self.midi_out.send(mido.Message('sysex', data=[SysExMsg.TOGGLE_BTN_CMD, idx, tog]))
+        self.midi_out.send(mido.Message('sysex', data=[MANU_ID, SysExMsg.TOGGLE_BTN_CMD, idx, tog]))
 
     def on_midi_receive(self, midi_msg):
         """
@@ -211,17 +218,22 @@ class Root:
         @param midi_msg: The incoming MIDI message
         """
 
-        if midi_msg.type == 'sysex' and midi_msg.data[0] == SysExMsg.PATCH_STS:
+        if (midi_msg.type == 'sysex' and midi_msg.data[0] == MANU_ID and
+                                         midi_msg.data[1] == SysExMsg.PATCH_STS):
+            ver_maj = midi_msg.data[2]
+            ver_min = midi_msg.data[3]
+            ver_pat = midi_msg.data[4] + (midi_msg.data[5] << 8)
+            self.fw_version.set(f'Firmware: {ver_maj}.{ver_min}.{ver_pat}');
             if self.root.focus_get() != self.channel:
                 self.channel.delete(0,"end")
-                self.channel.insert(0, midi_msg.data[1])
-            enc_mcc = midi_msg.data[2:ENC_NB+2]
+                self.channel.insert(0, midi_msg.data[6])
+            enc_mcc = midi_msg.data[7:ENC_NB+7]
             for i in range(ENC_NB):
                 # Do not update an Entry that being edited
                 if self.root.focus_get() != self.enc_mcc[i]:
                     self.enc_mcc[i].delete(0,"end")
                     self.enc_mcc[i].insert(0, enc_mcc[i])
-            btn_cfg = midi_msg.data[ENC_NB+2:ENC_NB+2+BTN_NB*2]
+            btn_cfg = midi_msg.data[ENC_NB+7:ENC_NB+7+BTN_NB*2]
             for i in range(BTN_NB):
                 btn_mcc = btn_cfg[i*2]
                 btn_tog = btn_cfg[i*2+1]
@@ -256,7 +268,7 @@ class Root:
 
         # Send patch request
         if self.midi_out:
-            self.midi_out.send(mido.Message('sysex', data=[SysExMsg.PATCH_REQ]))
+            self.midi_out.send(mido.Message('sysex', data=[MANU_ID, SysExMsg.PATCH_REQ]))
         
         # Update MIDI ports
         inmenu = self.ddin['menu']
