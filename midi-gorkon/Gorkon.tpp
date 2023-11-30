@@ -35,8 +35,6 @@ Gorkon<NbEnc, NbBtn>::Gorkon( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&e
 template <uint8_t NbEnc, uint8_t NbBtn>
 void Gorkon<NbEnc, NbBtn>::begin()
 {
-    Serial << "Firmware version: " << GK_VERSION << endl;
-
     restoreConfig();
 
 #ifdef GK_DEBUG
@@ -59,6 +57,8 @@ void Gorkon<NbEnc, NbBtn>::update()
 template <uint8_t NbEnc, uint8_t NbBtn>
 void Gorkon<NbEnc, NbBtn>::sendPatchStatus()
 {
+    Serial << "Firmware version: " << GK_VERSION << endl;
+
     SysExProto::patch_sts_u<NbEnc, NbBtn> sts;
     sts.sts.syx_hdr = SysExProto::SysExStart;
     sts.sts.syx_ftr = SysExProto::SysExEnd;
@@ -171,10 +171,14 @@ void Gorkon<NbEnc, NbBtn>::saveConfig()
     for (int i = 0; i < NbBtn; i++)
     {
         uint8_t mcc = default_btn_mcc[i];
+        uint8_t tog = default_btn_tog[i];
         if (this->btn[i])
+        {
             mcc = this->btn[i]->getAddress().getAddress();
+            tog = this->btn[i]->isToggle();
+        }
         EEPROM.update(1+NbEnc+i,   mcc);
-        EEPROM.update(1+NbEnc+i+1, btn[i]->isToggle());
+        EEPROM.update(1+NbEnc+i+1, tog);
     }
 #ifdef GK_DEBUG
     Serial << "Config saved." << endl;
