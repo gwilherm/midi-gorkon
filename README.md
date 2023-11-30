@@ -30,24 +30,24 @@ Arduino SysEx programmable 8 Knobs MIDI USB Controller
 ### Command line (Ubuntu/Debian)
 
 ```shell
+# Install dependencies
 sudo apt install arduino-mk
+
+# Compile and upload
 cd midi-gorkon
-make
 make upload
 ```
 
 ## Gorkon Configuration App (Ubuntu/Debian)
 
 ```shell
+# Install dependencies
 sudo apt install python3-rtmidi
-cd gorkon-config-app
-python3 -m venv venv
-source venv/bin/activate
-python3 -m pip install -r requirements.txt
+
 # Launch using Jack
-./gorkon-config-app.py
+./gorkon-config
 # Launch using Alsa
-./gorkon-config-app.py -a
+./gorkon-config -a
 ```
 
 ![](doc/gorkon-config-app.png)
