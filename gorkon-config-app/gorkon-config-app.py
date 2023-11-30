@@ -141,12 +141,12 @@ class Root:
     def on_save(self):
         # Send the SysEx message
         if self.midi_out:
-           self.midi_out.send(mido.Message('sysex', data=[SysExMsg.SAVE_CMD]))
+           self.midi_out.send(mido.Message('sysex', data=[MANU_ID, SysExMsg.SAVE_CMD]))
 
     def on_reset(self):
         # Send the SysEx message
         if self.midi_out:
-           self.midi_out.send(mido.Message('sysex', data=[SysExMsg.RESET_CMD]))
+           self.midi_out.send(mido.Message('sysex', data=[MANU_ID, SysExMsg.RESET_CMD]))
 
     def on_change_input_conn(self, *args):
         if self.midi_in:
