@@ -20,14 +20,12 @@ Arduino SysEx programmable 8 Knobs MIDI USB Controller
 
 ## Install libraries
 ### MIDIUSB
-In Arduino IDE:
-Sketch > Include Library > Manage Libraries > MIDIUSB
+In Arduino IDE: Sketch > Include Library > Manage Libraries > MIDIUSB
 
 ### Control Surface
-
 Download https://github.com/tttapa/Control-Surface/archive/refs/heads/main.zip
-In Arduino IDE:
-Sketch > Include Library > Install from Zip
+
+In Arduino IDE: Sketch > Include Library > Install from Zip
 
 ## Flash Arduino ProMicro
 ### Arduino IDE
