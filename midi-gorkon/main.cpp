@@ -1,5 +1,3 @@
-// #include <Control_Surface.h>
-
 #include "Gorkon.hpp"
 
 // Number of encoders (XY = 2 encoders)

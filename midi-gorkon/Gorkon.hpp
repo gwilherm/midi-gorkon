@@ -1,6 +1,7 @@
 #ifndef GORKON_HPP
 #define GORKON_HPP
 
+#include "TouchpadPiano.hpp"
 #include <Adafruit_NeoPixel.h>
 
 #include "GkCCEncoder.hpp"
