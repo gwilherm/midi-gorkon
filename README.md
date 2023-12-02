@@ -18,6 +18,17 @@ Arduino SysEx programmable 8 Knobs MIDI USB Controller
 
 [KY-023 XY Joystick (jorgechacblogspot)](https://github.com/jorgechacblogspot/librerias_fritzing/raw/main/KY-023%20Dual%20Axis%20Joystick%20Module.fzpz)
 
+## Install libraries
+### MIDIUSB
+In Arduino IDE:
+Sketch > Include Library > Manage Libraries > MIDIUSB
+
+### Control Surface
+
+Download https://github.com/tttapa/Control-Surface/archive/refs/heads/main.zip
+In Arduino IDE:
+Sketch > Include Library > Install from Zip
+
 ## Flash Arduino ProMicro
 ### Arduino IDE
 
