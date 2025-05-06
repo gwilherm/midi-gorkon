@@ -1,0 +1,13 @@
+profiles:
+  promicro:
+    fqbn: arduino:avr:micro
+    platforms:
+      - platform: arduino:avr (1.8.6)
+    libraries:
+      - MIDI Library (5.0.2)
+      - MIDIUSB (1.0.5)
+      - USB-MIDI (1.1.2)
+      - Control Surface (2.0.0)
+      - Adafruit NeoPixel (1.12.5)
+      
+default_profile: promicro

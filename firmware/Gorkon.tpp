@@ -21,7 +21,7 @@ Gorkon( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
     rgbFadeTimer(3),
     channel(0)
 {
-    char *copy = strdup(GK_VERSION);
+    char *copy = strdup(FW_VERSION);
 
     this->fw_version = {
         .major =  static_cast<uint8_t>(atoi(strtok(copy, "."))),
@@ -47,7 +47,7 @@ void Gorkon<NbEnc, NbBtn>::begin()
 {
     restoreConfig();
 
-#ifdef GK_DEBUG
+#ifdef FW_DEBUG
     dumpConfig();
 #endif
 
@@ -77,7 +77,7 @@ void Gorkon<NbEnc, NbBtn>::update()
 template <uint8_t NbEnc, uint8_t NbBtn>
 void Gorkon<NbEnc, NbBtn>::sendPatchStatus()
 {
-    Serial << "Firmware version: " << GK_VERSION << endl;
+    Serial << "Firmware version: " << FW_VERSION << endl;
 
     SysExProto::patch_sts_u<NbEnc, NbBtn> sts;
     sts.sts.syx_hdr = SysExProto::SysExStart;
@@ -114,7 +114,7 @@ void Gorkon<NbEnc, NbBtn>::handleChangeChannelSysEx(const uint8_t* msg, unsigned
         uint8_t newChan = ((SysExProto::change_chan_cmd_t*)msg)->channel;
         if (newChan <= 15)
         {
-#ifdef GK_DEBUG
+#ifdef FW_DEBUG
             Serial << "Channel = " << newChan << endl;
 #endif
             // Change all component channel
@@ -150,7 +150,7 @@ void Gorkon<NbEnc, NbBtn>::handleChangeStartNoteSysEx(const uint8_t* msg, unsign
         uint8_t startNote = ((SysExProto::change_start_note_cmd_t*)msg)->st_note;
         if (startNote <= 127)
         {
-#ifdef GK_DEBUG
+#ifdef FW_DEBUG
             Serial << "Start note = " << startNote << endl;
 #endif
 
@@ -226,7 +226,7 @@ void Gorkon<NbEnc, NbBtn>::saveConfig()
         EEPROM.update(1+NbEnc+i,   mcc);
         EEPROM.update(1+NbEnc+i+1, tog);
     }
-#ifdef GK_DEBUG
+#ifdef FW_DEBUG
     Serial << "Config saved." << endl;
 #endif
 }
@@ -275,7 +275,7 @@ void Gorkon<NbEnc, NbBtn>::resetConfig()
     }
 }
 
-#ifdef GK_DEBUG
+#ifdef FW_DEBUG
 template <uint8_t NbEnc, uint8_t NbBtn>
 void Gorkon<NbEnc, NbBtn>::dumpConfig()
 {
@@ -301,7 +301,7 @@ void Gorkon<NbEnc, NbBtn>::dumpConfig()
 template <uint8_t NbEnc, uint8_t NbBtn>
 void Gorkon<NbEnc, NbBtn>::onSysExMessage(MIDI_Interface &, SysExMessage sysex)
 {
-#ifdef GK_DEBUG
+#ifdef FW_DEBUG
     // Print the message
     Serial << F("Received SysEx message: ")         //
             << AH::HexDump(sysex.data, sysex.length) //
@@ -353,21 +353,21 @@ void Gorkon<NbEnc, NbBtn>::handlePianoModeSwitch()
             switch (piano.getMode())
             {
             case PianoMode::Standard:
-#ifdef GK_DEBUG
+#ifdef FW_DEBUG
                 Serial.println("Hold");
 #endif
                 piano.setMode(PianoMode::Hold);
                 this->targetColor = { 25, 210,  25}; // fade into green
                 break;
             case PianoMode::Hold:
-#ifdef GK_DEBUG
+#ifdef FW_DEBUG
                 Serial.println("Monodic");
 #endif
                 piano.setMode(PianoMode::Monodic);
                 this->targetColor = { 25,  25, 210}; // fade into blue
                 break;
             case PianoMode::Monodic:
-#ifdef GK_DEBUG
+#ifdef FW_DEBUG
                 Serial.println("Standard");
 #endif
                 piano.setMode(PianoMode::Standard);

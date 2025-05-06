@@ -44,7 +44,7 @@ protected:
     void handlePianoModeSwitch();
     void pianoRGBColorFade();
 
-#ifdef GK_DEBUG
+#ifdef FW_DEBUG
     void dumpConfig();
 #endif
 
