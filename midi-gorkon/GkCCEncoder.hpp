@@ -3,7 +3,6 @@
 
 #include <Control_Surface.h>
 
-using GkCCEncoder = CCPotentiometer; // does not work
-// #define GkCCEncoder CCPotentiometer
+using GkCCEncoder = CCPotentiometer;
 
 #endif // GK_CC_ENCODER_HPP

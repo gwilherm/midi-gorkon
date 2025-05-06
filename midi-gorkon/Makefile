@@ -4,6 +4,7 @@ BOARD_TAG    = micro
 ARDUINO_LIBS = SPI EEPROM
 # User libs
 ARDUINO_LIBS+= Control-Surface MIDIUSB
+ARDUINO_LIBS+= Adafruit_NeoPixel
 
 # Workaround for MIDIUSB with 1.8.19: 1819 < 10606 (1.6.6)
 ARDUINO_VERSION = 10819

@@ -25,8 +25,9 @@ class SysExMsg(IntEnum):
   PATCH_BTN_CMD = 3 # Out: Change a button patch
   TOGGLE_BTN_CMD = 4 # Out: Change a button toggle
   CHANGE_CHAN_CMD = 5 # Out: Change the midi channel
-  SAVE_CMD  = 6 # Out: Save the current config
-  RESET_CMD = 7 # Out: Save the current config
+  CHANGE_START_NOTE_CMD = 6 # Out: Change the piano start note
+  SAVE_CMD  = 7 # Out: Save the current config
+  RESET_CMD = 8 # Out: Save the current config
 
 class Root:
     midi_in = None
@@ -57,7 +58,7 @@ class Root:
         self.output_conn.trace('w', self.on_change_output_conn)
 
         self.ddin = tk.OptionMenu(self.root, self.input_conn, value='')
-        self.ddin.place(y=10, w=200)
+        self.ddin.place(x=150, y=10, w=200)
         self.ddout = tk.OptionMenu(self.root, self.output_conn, value='')
         self.ddout.place(relx=1, y=10, w=200, anchor='ne')
 
@@ -69,23 +70,23 @@ class Root:
 
         self.enc_mcc = []
 
-        # Right side text boxes
+        # Left side text boxes
         pady=300
         for i in range(int(ENC_NB / 2) - 1):
             self.enc_mcc += [tk.Entry()]
-            self.enc_mcc[i].place(y=pady, w=50)
+            self.enc_mcc[i].place(x=150, y=pady, w=50)
             self.enc_mcc[i].bind('<Return>', lambda event, idx=i: self.on_change_cc(event, SysExMsg.PATCH_ENC_CMD, idx))
             pady += 105
 
         i += 1
         # Joystick y
         self.enc_mcc += [tk.Entry()]
-        self.enc_mcc[i].place(x=400, y=700, w=50)
+        self.enc_mcc[i].place(x=550, y=700, w=50)
         self.enc_mcc[i].bind('<Return>', lambda event, idx=i: self.on_change_cc(event, SysExMsg.PATCH_ENC_CMD, idx))
         lbl = tk.Label(text=": y")
-        lbl.place(x=450, y=700)
+        lbl.place(x=600, y=700)
 
-        # Left side text boxes
+        # Right side text boxes
         pady=300
         for i in range(int(ENC_NB / 2), ENC_NB - 1):
             self.enc_mcc += [tk.Entry()]
@@ -96,24 +97,30 @@ class Root:
         i += 1
         # Joystick x
         self.enc_mcc += [tk.Entry()]
-        self.enc_mcc[i].place(x=400, y=680, w=50)
+        self.enc_mcc[i].place(x=550, y=680, w=50)
         self.enc_mcc[i].bind('<Return>', lambda event, idx=i: self.on_change_cc(event, SysExMsg.PATCH_ENC_CMD, idx))
         lbl = tk.Label(text=": x")
-        lbl.place(x=450, y=680)
+        lbl.place(x=600, y=680)
 
         self.btn_mcc = []
         self.var_tog = []
 
         # Joystick Switch
         self.btn_mcc += [tk.Entry()]
-        self.btn_mcc[0].place(x=400, y=720, w=50)
+        self.btn_mcc[0].place(x=550, y=720, w=50)
         self.btn_mcc[0].bind('<Return>', lambda event, idx=0: self.on_change_cc(event, SysExMsg.PATCH_BTN_CMD, idx))
         lbl = tk.Label(text=": sw")
-        lbl.place(x=450, y=720)
+        lbl.place(x=600, y=720)
         self.var_tog += [tk.IntVar()]
         self.var_tog[0].trace('w', lambda *args, idx=0: self.on_change_btn_tog(idx))
         btn_tog = tk.Checkbutton(text=': Latch', variable=self.var_tog[0])
-        btn_tog.place(x=480, y=720, w=70)
+        btn_tog.place(x=630, y=720, w=70)
+
+        lbl = tk.Label(text='transp:')
+        lbl.place(x=20, y=350)
+        self.tpp_startnote = tk.Entry()
+        self.tpp_startnote.place(x=20, y=370, w=50)
+        self.tpp_startnote.bind('<Return>', lambda event: self.on_change_tpp_startnote(event))
 
         save_btn = tk.Button(text='Flash the patch', command = self.on_save)
         save_btn.pack()
@@ -175,6 +182,28 @@ class Root:
 
             # Send the SysEx message
             self.midi_out.send(mido.Message('sysex', data=[SysExMsg.CHANGE_CHAN_CMD, int(midi_chan)]))
+
+        # Lose focus to be refreshed by the timer
+        self.root.focus()
+
+
+    def on_change_tpp_startnote(self, e):
+        """
+        Calback to validate Touchpad Piano start note input
+        Sends the new start note.
+
+        @param e:   event
+        """
+        if self.midi_out:
+            # Get the Entry value
+            start_note = e.widget.get()
+            if int(start_note) > 127:
+                print("bad start note value: " + start_note)
+                return
+            print('Piano start note => ' + start_note)
+
+            # Send the SysEx message
+            self.midi_out.send(mido.Message('sysex', data=[SysExMsg.CHANGE_START_NOTE_CMD, int(start_note)]))
 
         # Lose focus to be refreshed by the timer
         self.root.focus()
@@ -246,6 +275,9 @@ class Root:
                 self.var_tog[i].set(btn_tog)
                 # Set back the callback
                 self.var_tog[i].trace('w', lambda *args,idx=i: self.on_change_btn_tog(idx))
+            if self.root.focus_get() != self.tpp_startnote:
+                self.tpp_startnote.delete(0,"end")
+                self.tpp_startnote.insert(0, midi_msg.data[ENC_NB+2+BTN_NB*2])
 
     def on_close(self):
         """
