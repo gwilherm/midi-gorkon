@@ -1,7 +1,7 @@
 #include <Control_Surface.h>
 #include <EEPROM.h>
 
-#include "VadersWrapper.hpp"
+#include "VadersWrapper.h"
 
 #define BTN_PIN 1
 #define SDO_PIN 2
@@ -12,10 +12,9 @@
 USBMIDI_Interface midi;  // Instantiate a MIDI Interface to use
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-VadersWrapper<NbEnc, NbBtn>::
-VadersWrapper( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
-        const uint8_t (&btn_pin)[NbBtn], const uint8_t (&btn_mcc)[NbBtn],
-        const bool    (&btn_tog)[NbBtn]):
+VadersWrapper<NbEnc, NbBtn>::VadersWrapper( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
+                                            const uint8_t (&btn_pin)[NbBtn], const uint8_t (&btn_mcc)[NbBtn],
+                                            const bool    (&btn_tog)[NbBtn]):
     piano(SCL_PIN, SDO_PIN, MIDI_Notes::C(4)),
     pianoRGB(LED_COUNT, RGB_PIN, NEO_GRB + NEO_KHZ800),
     rgbFadeTimer(3),
@@ -24,8 +23,8 @@ VadersWrapper( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
     char *copy = strdup(FW_VERSION);
 
     this->fw_version = {
-        .major =  static_cast<uint8_t>(atoi(strtok(copy, "."))),
-        .minor =  static_cast<uint8_t>(atoi(strtok(NULL, "."))),
+        .major = static_cast<uint8_t>(atoi(strtok(copy, "."))),
+        .minor = static_cast<uint8_t>(atoi(strtok(NULL, "."))),
         .patch = static_cast<uint16_t>(atoi(strtok(NULL, ".")))
     };
 

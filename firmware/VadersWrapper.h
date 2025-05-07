@@ -1,11 +1,11 @@
-#ifndef VADERSWRAPPER_HPP
-#define VADERSWRAPPER_HPP
+#ifndef VADERSWRAPPER_H
+#define VADERSWRAPPER_H
 
-#include "TouchpadPiano.hpp"
 #include <Adafruit_NeoPixel.h>
 
-#include "VwCCEncoder.hpp"
-#include "VwCCButton.hpp"
+#include "TouchpadPiano.h"
+#include "VwCCEncoder.h"
+#include "VwCCButton.h"
 #include "sysex_proto.h"
 
 typedef struct 
@@ -78,4 +78,4 @@ private:
 };
 
 #include "VadersWrapper.tpp"
-#endif // VADERSWRAPPER_HPP
+#endif // VADERSWRAPPER_H

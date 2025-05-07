@@ -1,5 +1,5 @@
-#ifndef VW_CC_BUTTON_HPP
-#define VW_CC_BUTTON_HPP
+#ifndef VW_CC_BUTTON_H
+#define VW_CC_BUTTON_H
 
 #include "midi_addressable.h"
 
@@ -32,4 +32,4 @@ private:
     bool _toggle;
 };
 
-#endif // VW_CC_BUTTON_HPP
+#endif // VW_CC_BUTTON_H
