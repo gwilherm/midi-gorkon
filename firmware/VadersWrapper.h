@@ -7,6 +7,7 @@
 #include "VwCCEncoder.h"
 #include "VwCCButton.h"
 #include "sysex_proto.h"
+#include "config.h"
 
 typedef struct 
 {
@@ -15,21 +16,18 @@ typedef struct
     uint8_t b;
 } rgb_t;
 
-template <uint8_t NbEnc, uint8_t NbBtn>
 class VadersWrapper : MIDI_Callbacks
 {
 public:
-    VadersWrapper( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
-            const uint8_t (&btn_pin)[NbBtn], const uint8_t (&btn_mcc)[NbBtn],
-            const bool    (&btn_tog)[NbBtn]);
+    VadersWrapper();
 
 public:
     void begin();
     void update();
 
-    void setDefaultEncMCC(const uint8_t mcc[NbEnc]);
-    void setDefaultBtnMCC(const uint8_t mcc[NbBtn]);
-    void setDefaultBtnTog(const bool    tog[NbBtn]);
+    void setDefaultEncMCC(const uint8_t mcc[ENC_NB]);
+    void setDefaultBtnMCC(const uint8_t mcc[BTN_NB]);
+    void setDefaultBtnTog(const bool    tog[BTN_NB]);
 
 protected:
     void handleEncPatchSysEx(const uint8_t* array, unsigned size);
@@ -54,15 +52,8 @@ protected:
 
 private:
     SysExProto::semver_t fw_version;
-    uint8_t enc_pin[NbEnc];
-    uint8_t default_enc_mcc[NbEnc];
-    
-    uint8_t btn_pin[NbBtn];
-    uint8_t default_btn_mcc[NbBtn];
-    bool    default_btn_tog[NbBtn];
-
-    VwCCEncoder*  enc[NbEnc];
-    VwCCButton*   btn[NbBtn];
+    VwCCEncoder*  enc[ENC_NB];
+    VwCCButton*   btn[BTN_NB];
     TouchpadPiano piano;
     Adafruit_NeoPixel pianoRGB;
 
@@ -77,5 +68,4 @@ private:
     uint8_t channel;
 };
 
-#include "VadersWrapper.tpp"
 #endif // VADERSWRAPPER_H

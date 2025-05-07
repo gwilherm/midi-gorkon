@@ -11,10 +11,7 @@
 
 USBMIDI_Interface midi;  // Instantiate a MIDI Interface to use
 
-template <uint8_t NbEnc, uint8_t NbBtn>
-VadersWrapper<NbEnc, NbBtn>::VadersWrapper( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
-                                            const uint8_t (&btn_pin)[NbBtn], const uint8_t (&btn_mcc)[NbBtn],
-                                            const bool    (&btn_tog)[NbBtn]):
+VadersWrapper::VadersWrapper():
     piano(SCL_PIN, SDO_PIN, MIDI_Notes::C(4)),
     pianoRGB(LED_COUNT, RGB_PIN, NEO_GRB + NEO_KHZ800),
     rgbFadeTimer(3),
@@ -27,22 +24,9 @@ VadersWrapper<NbEnc, NbBtn>::VadersWrapper( const uint8_t (&enc_pin)[NbEnc], con
         .minor = static_cast<uint8_t>(atoi(strtok(NULL, "."))),
         .patch = static_cast<uint16_t>(atoi(strtok(NULL, ".")))
     };
-
-    for (int i = 0; i < NbEnc; i++)
-    {
-        this->enc_pin[i] = enc_pin[i];
-        this->default_enc_mcc[i] = enc_mcc[i];
-    }
-    for (int i = 0; i < NbBtn; i++)
-    {
-        this->btn_pin[i] = btn_pin[i];
-        this->default_btn_mcc[i] = btn_mcc[i];
-        this->default_btn_tog[i] = btn_tog[i];
-    }
 }
 
-template <uint8_t NbEnc, uint8_t NbBtn>
-void VadersWrapper<NbEnc, NbBtn>::begin()
+void VadersWrapper::begin()
 {
     restoreConfig();
 
@@ -50,7 +34,7 @@ void VadersWrapper<NbEnc, NbBtn>::begin()
     dumpConfig();
 #endif
 
-    pinMode(BTN_PIN, INPUT_PULLUP);
+    pinMode(BTN_PINS, INPUT_PULLUP);
 
     pianoRGB.begin();           // INITIALIZE NeoPixel pianoRGB object (REQUIRED)
     pianoRGB.show();            // Turn OFF all pixels ASAP
@@ -61,8 +45,7 @@ void VadersWrapper<NbEnc, NbBtn>::begin()
     midi.setCallbacks(this);
 }
 
-template <uint8_t NbEnc, uint8_t NbBtn>
-void VadersWrapper<NbEnc, NbBtn>::update()
+void VadersWrapper::update()
 {   
     handlePianoModeSwitch();
 
@@ -73,12 +56,11 @@ void VadersWrapper<NbEnc, NbBtn>::update()
     pianoRGBColorFade();
 }
 
-template <uint8_t NbEnc, uint8_t NbBtn>
-void VadersWrapper<NbEnc, NbBtn>::sendPatchStatus()
+void VadersWrapper::sendPatchStatus()
 {
     Serial << "Firmware version: " << FW_VERSION << endl;
 
-    SysExProto::patch_sts_u<NbEnc, NbBtn> sts;
+    SysExProto::patch_sts_u sts;
     sts.sts.syx_hdr = SysExProto::SysExStart;
     sts.sts.syx_ftr = SysExProto::SysExEnd;
     sts.sts.manu_id = SysExProto::ManuId;
@@ -87,11 +69,11 @@ void VadersWrapper<NbEnc, NbBtn>::sendPatchStatus()
     sts.sts.fw_ver  = this->fw_version;
     sts.sts.channel = this->channel;
 
-    for (int i = 0; i < NbEnc; i++)
+    for (int i = 0; i < ENC_NB; i++)
         if (this->enc[i])
             sts.sts.enc_mcc[i] = this->enc[i]->getAddress().getAddress();
 
-    for (int i = 0; i < NbBtn; i++)
+    for (int i = 0; i < BTN_NB; i++)
     {
         if (this->btn[i])
         {
@@ -105,8 +87,7 @@ void VadersWrapper<NbEnc, NbBtn>::sendPatchStatus()
     midi.sendSysEx(sts.array);
 }
 
-template <uint8_t NbEnc, uint8_t NbBtn>
-void VadersWrapper<NbEnc, NbBtn>::handleChangeChannelSysEx(const uint8_t* msg, unsigned size)
+void VadersWrapper::handleChangeChannelSysEx(const uint8_t* msg, unsigned size)
 {
     if (size == sizeof(SysExProto::change_chan_cmd_t))
     {
@@ -117,14 +98,14 @@ void VadersWrapper<NbEnc, NbBtn>::handleChangeChannelSysEx(const uint8_t* msg, u
             Serial << "Channel = " << newChan << endl;
 #endif
             // Change all component channel
-            for (int i = 0; i < NbEnc; i++)
+            for (int i = 0; i < ENC_NB; i++)
                 if (this->enc[i])
                     this->enc[i]->setAddress({
                         this->enc[i]->getAddress().getAddress(),
                         Channel(newChan)
                     });
 
-            for (int i = 0; i < NbBtn; i++)
+            for (int i = 0; i < BTN_NB; i++)
                 if (this->btn[i])
                     this->btn[i]->setAddressUnsafe({
                         this->btn[i]->getAddress().getAddress(),
@@ -141,8 +122,7 @@ void VadersWrapper<NbEnc, NbBtn>::handleChangeChannelSysEx(const uint8_t* msg, u
     }
 }
 
-template <uint8_t NbEnc, uint8_t NbBtn>
-void VadersWrapper<NbEnc, NbBtn>::handleChangeStartNoteSysEx(const uint8_t* msg, unsigned size)
+void VadersWrapper::handleChangeStartNoteSysEx(const uint8_t* msg, unsigned size)
 {
     if (size == sizeof(SysExProto::change_start_note_cmd_t))
     {
@@ -157,39 +137,37 @@ void VadersWrapper<NbEnc, NbBtn>::handleChangeStartNoteSysEx(const uint8_t* msg,
         }
     }
 }
-template <uint8_t NbEnc, uint8_t NbBtn>
-void VadersWrapper<NbEnc, NbBtn>::handleEncPatchSysEx(const uint8_t* msg, unsigned size)
+
+void VadersWrapper::handleEncPatchSysEx(const uint8_t* msg, unsigned size)
 {
     if (size == sizeof(SysExProto::patch_cmd_t))
     {
         SysExProto::patch_cmd_t* patch = (SysExProto::patch_cmd_t*)msg;
-        if ((patch->ctl_idx < NbEnc) && (patch->ctl_val <= 127))
+        if ((patch->ctl_idx < ENC_NB) && (patch->ctl_val <= 127))
             if (this->enc[patch->ctl_idx])
             this->enc[patch->ctl_idx]->setAddress(patch->ctl_val);
     }
 }
 
-template <uint8_t NbEnc, uint8_t NbBtn>
-void VadersWrapper<NbEnc, NbBtn>::handleBtnPatchSysEx(const uint8_t* msg, unsigned size)
+void VadersWrapper::handleBtnPatchSysEx(const uint8_t* msg, unsigned size)
 {
     if (size == sizeof(SysExProto::patch_cmd_t))
     {
         SysExProto::patch_cmd_t* patch = (SysExProto::patch_cmd_t*)msg;
-        if ((patch->ctl_idx < NbBtn) && (patch->ctl_val <= 127))
+        if ((patch->ctl_idx < BTN_NB) && (patch->ctl_val <= 127))
             if (this->btn[patch->ctl_idx])
                 this->btn[patch->ctl_idx]->setAddressUnsafe(patch->ctl_val);
     }
 }
 
-template <uint8_t NbEnc, uint8_t NbBtn>
-void VadersWrapper<NbEnc, NbBtn>::handleBtnToggleSysEx(const uint8_t* msg, unsigned size)
+void VadersWrapper::handleBtnToggleSysEx(const uint8_t* msg, unsigned size)
 {
     if (size == sizeof(SysExProto::patch_cmd_t))
     {
         SysExProto::patch_cmd_t* patch = (SysExProto::patch_cmd_t*)msg;
-        if ((patch->ctl_idx < NbBtn) && (patch->ctl_val <= 1))
+        if ((patch->ctl_idx < BTN_NB) && (patch->ctl_val <= 1))
         {
-            uint8_t mcc = default_btn_mcc[patch->ctl_idx];
+            uint8_t mcc = BTN_DEFAULT_MIDI_CC[patch->ctl_idx];
             if (this->btn[patch->ctl_idx])
             {
                 mcc = this->btn[patch->ctl_idx]->getAddress().getAddress();
@@ -197,98 +175,94 @@ void VadersWrapper<NbEnc, NbBtn>::handleBtnToggleSysEx(const uint8_t* msg, unsig
             }
 
             bool tog = (bool)patch->ctl_val;
-            this->btn[patch->ctl_idx] = new VwCCButton(btn_pin[patch->ctl_idx], mcc, tog);
+            this->btn[patch->ctl_idx] = new VwCCButton(BTN_PINS[patch->ctl_idx], mcc, tog);
         }
     }
 }
 
-template <uint8_t NbEnc, uint8_t NbBtn>
-void VadersWrapper<NbEnc, NbBtn>::saveConfig()
+void VadersWrapper::saveConfig()
 {
     EEPROM.update(0, this->channel);
 
-    for (int i = 0; i < NbEnc; i++)
+    for (int i = 0; i < ENC_NB; i++)
     {
         if (this->enc[i])
             EEPROM.update(1+i, this->enc[i]->getAddress().getAddress());
     }
 
-    for (int i = 0; i < NbBtn; i++)
+    for (int i = 0; i < BTN_NB; i++)
     {
-        uint8_t mcc = default_btn_mcc[i];
-        uint8_t tog = default_btn_tog[i];
+        uint8_t mcc = BTN_DEFAULT_MIDI_CC[i];
+        uint8_t tog = BTN_DEFAULT_TOGGLE[i];
         if (this->btn[i])
         {
             mcc = this->btn[i]->getAddress().getAddress();
             tog = this->btn[i]->isToggle();
         }
-        EEPROM.update(1+NbEnc+i,   mcc);
-        EEPROM.update(1+NbEnc+i+1, tog);
+        EEPROM.update(1+ENC_NB+i,   mcc);
+        EEPROM.update(1+ENC_NB+i+1, tog);
     }
 #ifdef FW_DEBUG
     Serial << "Config saved." << endl;
 #endif
 }
 
-template <uint8_t NbEnc, uint8_t NbBtn>
-void VadersWrapper<NbEnc, NbBtn>::restoreConfig()
+void VadersWrapper::restoreConfig()
 {
     this->channel = EEPROM.read(0);
 
-    for (int i = 0; i < NbEnc; i++)
+    for (int i = 0; i < ENC_NB; i++)
     {
         uint8_t mcc = EEPROM.read(1+i);
         if (mcc > 127)
-            mcc = default_enc_mcc[i];
+            mcc = ENC_DEFAULT_MIDI_CC[i];
 
-        this->enc[i] = new VwCCEncoder(enc_pin[i], mcc);
+        this->enc[i] = new VwCCEncoder(ENC_PINS[i], mcc);
     }
 
-    for (int i = 0; i < NbBtn; i++)
+    for (int i = 0; i < BTN_NB; i++)
     {
-        uint8_t mcc = EEPROM.read(1+NbEnc+i);
-        uint8_t tog = EEPROM.read(1+NbEnc+i+1);
+        uint8_t mcc = EEPROM.read(1+ENC_NB+i);
+        uint8_t tog = EEPROM.read(1+ENC_NB+i+1);
         if (mcc > 127)
-            mcc = default_btn_mcc[i];
+            mcc = BTN_DEFAULT_MIDI_CC[i];
         if (tog > 127)
-            tog = default_btn_tog[i];
+            tog = BTN_DEFAULT_TOGGLE[i];
 
-        this->btn[i] = new VwCCButton(btn_pin[i], mcc, tog);
+        this->btn[i] = new VwCCButton(BTN_PINS[i], mcc, tog);
     }
 }
 
-template <uint8_t NbEnc, uint8_t NbBtn>
-void VadersWrapper<NbEnc, NbBtn>::resetConfig()
+void VadersWrapper::resetConfig()
 {
     this->channel = 0;
 
-    for (int i = 0; i < NbEnc; i++)
+    for (int i = 0; i < ENC_NB; i++)
         if (this->enc[i])
-            this->enc[i]->setAddress(default_enc_mcc[i]);
+            this->enc[i]->setAddress(ENC_DEFAULT_MIDI_CC[i]);
 
-    for (int i = 0; i < NbBtn; i++)
+    for (int i = 0; i < BTN_NB; i++)
     {
-        uint8_t mcc = default_btn_mcc[i];
-        bool    tog = default_btn_tog[i];
-        this->btn[i] = new VwCCButton(btn_pin[i], mcc, tog);
+        uint8_t mcc = BTN_DEFAULT_MIDI_CC[i];
+        bool    tog = BTN_DEFAULT_TOGGLE[i];
+        this->btn[i] = new VwCCButton(BTN_PINS[i], mcc, tog);
     }
 }
 
 #ifdef FW_DEBUG
-template <uint8_t NbEnc, uint8_t NbBtn>
-void VadersWrapper<NbEnc, NbBtn>::dumpConfig()
+void VadersWrapper::dumpConfig()
 {
     Serial << "Channel = " << this->channel << endl;
-    for (int i = 0; i < NbEnc; i++)
+    for (int i = 0; i < ENC_NB; i++)
     {
-        Serial << "Enc[" << i << "] (pin:" << enc_pin[i] << ")"
+        Serial << "Enc[" << i << "] (pin:" << ENC_PINS[i] << ")"
             << " => MCC = " << this->enc[i]->getAddress().getAddress()
             << endl;
     }
 
-    for (int i = 0; i < NbBtn; i++)
+    for (int i = 0; i < BTN_NB; i++)
     {
-        Serial << "Btn[" << i << "] (pin:" << btn_pin[i] << ")"
+        Serial << "Btn[" << i << "] (pin:" << BTN_PINS[i] << ")"
             << " => MCC = " << this->btn[i]->getAddress().getAddress()
             << " -- TOG = " << this->btn[i]->isToggle()
             << endl;
@@ -297,8 +271,7 @@ void VadersWrapper<NbEnc, NbBtn>::dumpConfig()
 #endif
 
 // This callback function is called when a SysEx message is received.
-template <uint8_t NbEnc, uint8_t NbBtn>
-void VadersWrapper<NbEnc, NbBtn>::onSysExMessage(MIDI_Interface &, SysExMessage sysex)
+void VadersWrapper::onSysExMessage(MIDI_Interface &, SysExMessage sysex)
 {
 #ifdef FW_DEBUG
     // Print the message
@@ -341,10 +314,9 @@ void VadersWrapper<NbEnc, NbBtn>::onSysExMessage(MIDI_Interface &, SysExMessage 
     }
 }
 
-template <uint8_t NbEnc, uint8_t NbBtn>
-void VadersWrapper<NbEnc, NbBtn>::handlePianoModeSwitch()
+void VadersWrapper::handlePianoModeSwitch()
 {
-    int newBtnState = digitalRead(BTN_PIN);
+    int newBtnState = digitalRead(BTN_PINS);
     if ((millis() - this->pianoModeSwitchLastDebounceTime) > 70)
     {
         if ((this->pianoModeSwitchState == LOW) && (newBtnState == HIGH))
@@ -380,8 +352,7 @@ void VadersWrapper<NbEnc, NbBtn>::handlePianoModeSwitch()
 }
 
 
-template <uint8_t NbEnc, uint8_t NbBtn>
-void VadersWrapper<NbEnc, NbBtn>::pianoRGBColorFade()
+void VadersWrapper::pianoRGBColorFade()
 {
     if(!this->rgbFadeTimer) return;
     uint8_t r      = targetColor.r;

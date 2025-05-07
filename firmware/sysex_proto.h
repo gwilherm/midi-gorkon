@@ -1,6 +1,8 @@
 #ifndef SYSEX_PROTO_H
 #define SYSEX_PROTO_H
 
+#include "config.h"
+
 namespace SysExProto {
     constexpr static const uint8_t SysExStart = 0xF0;
     constexpr static const uint8_t SysExEnd   = 0xF7;
@@ -32,7 +34,6 @@ namespace SysExProto {
         uint16_t patch;
     } semver_t;
 
-    template<uint8_t NbEnc, uint8_t NbBtn>
     union patch_sts_u
     {
         struct msg
@@ -42,8 +43,8 @@ namespace SysExProto {
             uint8_t msg_idx;
             semver_t fw_ver;
             uint8_t channel;
-            uint8_t enc_mcc[NbEnc];
-            btn_t   btn_cfg[NbBtn];
+            uint8_t enc_mcc[ENC_NB];
+            btn_t   btn_cfg[BTN_NB];
             uint8_t st_note;
             uint8_t syx_ftr; // 0xF7
         } sts;

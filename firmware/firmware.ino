@@ -1,9 +1,6 @@
-#include "config.h"
 #include "VadersWrapper.h"
 
-VadersWrapper<ENC_NB, BTN_NB> vw(ENC_PINS, ENC_DEFAULT_MIDI_CC,
-                                 BTN_PINS, BTN_DEFAULT_MIDI_CC, BTN_DEFAULT_TOGGLE
-                                 );
+VadersWrapper vw;
 
 void setup()
 {
