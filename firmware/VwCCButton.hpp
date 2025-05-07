@@ -1,12 +1,12 @@
-#ifndef GK_CC_BUTTON_HPP
-#define GK_CC_BUTTON_HPP
+#ifndef VW_CC_BUTTON_HPP
+#define VW_CC_BUTTON_HPP
 
 #include "midi_addressable.h"
 
-class GkCCButton
+class VwCCButton
 {
 public:
-    GkCCButton(uint8_t pin, uint8_t mcc, bool toggle):
+    VwCCButton(uint8_t pin, uint8_t mcc, bool toggle):
         addressable(nullptr),
         _toggle(toggle)
     {
@@ -16,7 +16,7 @@ public:
             addressable = make_addressable<CCButton>(pin, mcc);
     }
 
-    virtual ~GkCCButton()
+    virtual ~VwCCButton()
     {
         delete addressable;
     }
@@ -32,4 +32,4 @@ private:
     bool _toggle;
 };
 
-#endif // GK_CC_BUTTON_HPP
+#endif // VW_CC_BUTTON_HPP

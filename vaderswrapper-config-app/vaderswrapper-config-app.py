@@ -35,14 +35,14 @@ class Root:
     def __init__(self):
         """ Initialization """
         self.root = tk.Tk()
-        self.root.title('Gorkon Configuration')
+        self.root.title("Vader's Wrapper Configuration")
         self.root.resizable(0, 0)
 
-        im = Image.open(os.path.join(sys.path[0], 'gorkon.png'))
-        gorkon = ImageTk.PhotoImage(im)
+        im = Image.open(os.path.join(sys.path[0], 'vaderswrapper.png'))
+        vaderswrapper = ImageTk.PhotoImage(im)
         
-        label = tk.Label(self.root, image=gorkon)
-        label.image = gorkon
+        label = tk.Label(self.root, image=vaderswrapper)
+        label.image = vaderswrapper
         label.pack()
 
         input_list  = list(set(mido.get_input_names()))
@@ -319,7 +319,7 @@ class Root:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         prog=sys.argv[0],
-        description='This application configures your Gorkon device')
+        description="This application configures your Vader's Wrapper device")
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-a', '--alsa', action='store_true', help='Use ALSA backend.')
     group.add_argument('-j', '--jack', action='store_true', help='Use JACK backend (Default if available).')

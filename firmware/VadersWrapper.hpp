@@ -1,11 +1,11 @@
-#ifndef GORKON_HPP
-#define GORKON_HPP
+#ifndef VADERSWRAPPER_HPP
+#define VADERSWRAPPER_HPP
 
 #include "TouchpadPiano.hpp"
 #include <Adafruit_NeoPixel.h>
 
-#include "GkCCEncoder.hpp"
-#include "GkCCButton.hpp"
+#include "VwCCEncoder.hpp"
+#include "VwCCButton.hpp"
 #include "sysex_proto.h"
 
 typedef struct 
@@ -16,10 +16,10 @@ typedef struct
 } rgb_t;
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-class Gorkon : MIDI_Callbacks
+class VadersWrapper : MIDI_Callbacks
 {
 public:
-    Gorkon( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
+    VadersWrapper( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
             const uint8_t (&btn_pin)[NbBtn], const uint8_t (&btn_mcc)[NbBtn],
             const bool    (&btn_tog)[NbBtn]);
 
@@ -61,8 +61,8 @@ private:
     uint8_t default_btn_mcc[NbBtn];
     bool    default_btn_tog[NbBtn];
 
-    GkCCEncoder*  enc[NbEnc];
-    GkCCButton*   btn[NbBtn];
+    VwCCEncoder*  enc[NbEnc];
+    VwCCButton*   btn[NbBtn];
     TouchpadPiano piano;
     Adafruit_NeoPixel pianoRGB;
 
@@ -77,5 +77,5 @@ private:
     uint8_t channel;
 };
 
-#include "Gorkon.tpp"
-#endif // GORKON_HPP
+#include "VadersWrapper.tpp"
+#endif // VADERSWRAPPER_HPP

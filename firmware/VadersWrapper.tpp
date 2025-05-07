@@ -1,7 +1,7 @@
 #include <Control_Surface.h>
 #include <EEPROM.h>
 
-#include "Gorkon.hpp"
+#include "VadersWrapper.hpp"
 
 #define BTN_PIN 1
 #define SDO_PIN 2
@@ -12,8 +12,8 @@
 USBMIDI_Interface midi;  // Instantiate a MIDI Interface to use
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-Gorkon<NbEnc, NbBtn>::
-Gorkon( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
+VadersWrapper<NbEnc, NbBtn>::
+VadersWrapper( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
         const uint8_t (&btn_pin)[NbBtn], const uint8_t (&btn_mcc)[NbBtn],
         const bool    (&btn_tog)[NbBtn]):
     piano(SCL_PIN, SDO_PIN, MIDI_Notes::C(4)),
@@ -43,7 +43,7 @@ Gorkon( const uint8_t (&enc_pin)[NbEnc], const uint8_t (&enc_mcc)[NbEnc],
 }
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::begin()
+void VadersWrapper<NbEnc, NbBtn>::begin()
 {
     restoreConfig();
 
@@ -63,7 +63,7 @@ void Gorkon<NbEnc, NbBtn>::begin()
 }
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::update()
+void VadersWrapper<NbEnc, NbBtn>::update()
 {   
     handlePianoModeSwitch();
 
@@ -75,7 +75,7 @@ void Gorkon<NbEnc, NbBtn>::update()
 }
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::sendPatchStatus()
+void VadersWrapper<NbEnc, NbBtn>::sendPatchStatus()
 {
     Serial << "Firmware version: " << FW_VERSION << endl;
 
@@ -107,7 +107,7 @@ void Gorkon<NbEnc, NbBtn>::sendPatchStatus()
 }
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::handleChangeChannelSysEx(const uint8_t* msg, unsigned size)
+void VadersWrapper<NbEnc, NbBtn>::handleChangeChannelSysEx(const uint8_t* msg, unsigned size)
 {
     if (size == sizeof(SysExProto::change_chan_cmd_t))
     {
@@ -143,7 +143,7 @@ void Gorkon<NbEnc, NbBtn>::handleChangeChannelSysEx(const uint8_t* msg, unsigned
 }
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::handleChangeStartNoteSysEx(const uint8_t* msg, unsigned size)
+void VadersWrapper<NbEnc, NbBtn>::handleChangeStartNoteSysEx(const uint8_t* msg, unsigned size)
 {
     if (size == sizeof(SysExProto::change_start_note_cmd_t))
     {
@@ -159,7 +159,7 @@ void Gorkon<NbEnc, NbBtn>::handleChangeStartNoteSysEx(const uint8_t* msg, unsign
     }
 }
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::handleEncPatchSysEx(const uint8_t* msg, unsigned size)
+void VadersWrapper<NbEnc, NbBtn>::handleEncPatchSysEx(const uint8_t* msg, unsigned size)
 {
     if (size == sizeof(SysExProto::patch_cmd_t))
     {
@@ -171,7 +171,7 @@ void Gorkon<NbEnc, NbBtn>::handleEncPatchSysEx(const uint8_t* msg, unsigned size
 }
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::handleBtnPatchSysEx(const uint8_t* msg, unsigned size)
+void VadersWrapper<NbEnc, NbBtn>::handleBtnPatchSysEx(const uint8_t* msg, unsigned size)
 {
     if (size == sizeof(SysExProto::patch_cmd_t))
     {
@@ -183,7 +183,7 @@ void Gorkon<NbEnc, NbBtn>::handleBtnPatchSysEx(const uint8_t* msg, unsigned size
 }
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::handleBtnToggleSysEx(const uint8_t* msg, unsigned size)
+void VadersWrapper<NbEnc, NbBtn>::handleBtnToggleSysEx(const uint8_t* msg, unsigned size)
 {
     if (size == sizeof(SysExProto::patch_cmd_t))
     {
@@ -198,13 +198,13 @@ void Gorkon<NbEnc, NbBtn>::handleBtnToggleSysEx(const uint8_t* msg, unsigned siz
             }
 
             bool tog = (bool)patch->ctl_val;
-            this->btn[patch->ctl_idx] = new GkCCButton(btn_pin[patch->ctl_idx], mcc, tog);
+            this->btn[patch->ctl_idx] = new VwCCButton(btn_pin[patch->ctl_idx], mcc, tog);
         }
     }
 }
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::saveConfig()
+void VadersWrapper<NbEnc, NbBtn>::saveConfig()
 {
     EEPROM.update(0, this->channel);
 
@@ -232,7 +232,7 @@ void Gorkon<NbEnc, NbBtn>::saveConfig()
 }
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::restoreConfig()
+void VadersWrapper<NbEnc, NbBtn>::restoreConfig()
 {
     this->channel = EEPROM.read(0);
 
@@ -242,7 +242,7 @@ void Gorkon<NbEnc, NbBtn>::restoreConfig()
         if (mcc > 127)
             mcc = default_enc_mcc[i];
 
-        this->enc[i] = new GkCCEncoder(enc_pin[i], mcc);
+        this->enc[i] = new VwCCEncoder(enc_pin[i], mcc);
     }
 
     for (int i = 0; i < NbBtn; i++)
@@ -254,12 +254,12 @@ void Gorkon<NbEnc, NbBtn>::restoreConfig()
         if (tog > 127)
             tog = default_btn_tog[i];
 
-        this->btn[i] = new GkCCButton(btn_pin[i], mcc, tog);
+        this->btn[i] = new VwCCButton(btn_pin[i], mcc, tog);
     }
 }
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::resetConfig()
+void VadersWrapper<NbEnc, NbBtn>::resetConfig()
 {
     this->channel = 0;
 
@@ -271,13 +271,13 @@ void Gorkon<NbEnc, NbBtn>::resetConfig()
     {
         uint8_t mcc = default_btn_mcc[i];
         bool    tog = default_btn_tog[i];
-        this->btn[i] = new GkCCButton(btn_pin[i], mcc, tog);
+        this->btn[i] = new VwCCButton(btn_pin[i], mcc, tog);
     }
 }
 
 #ifdef FW_DEBUG
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::dumpConfig()
+void VadersWrapper<NbEnc, NbBtn>::dumpConfig()
 {
     Serial << "Channel = " << this->channel << endl;
     for (int i = 0; i < NbEnc; i++)
@@ -299,7 +299,7 @@ void Gorkon<NbEnc, NbBtn>::dumpConfig()
 
 // This callback function is called when a SysEx message is received.
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::onSysExMessage(MIDI_Interface &, SysExMessage sysex)
+void VadersWrapper<NbEnc, NbBtn>::onSysExMessage(MIDI_Interface &, SysExMessage sysex)
 {
 #ifdef FW_DEBUG
     // Print the message
@@ -343,7 +343,7 @@ void Gorkon<NbEnc, NbBtn>::onSysExMessage(MIDI_Interface &, SysExMessage sysex)
 }
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::handlePianoModeSwitch()
+void VadersWrapper<NbEnc, NbBtn>::handlePianoModeSwitch()
 {
     int newBtnState = digitalRead(BTN_PIN);
     if ((millis() - this->pianoModeSwitchLastDebounceTime) > 70)
@@ -382,7 +382,7 @@ void Gorkon<NbEnc, NbBtn>::handlePianoModeSwitch()
 
 
 template <uint8_t NbEnc, uint8_t NbBtn>
-void Gorkon<NbEnc, NbBtn>::pianoRGBColorFade()
+void VadersWrapper<NbEnc, NbBtn>::pianoRGBColorFade()
 {
     if(!this->rgbFadeTimer) return;
     uint8_t r      = targetColor.r;

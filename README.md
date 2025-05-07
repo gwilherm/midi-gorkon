@@ -1,6 +1,6 @@
-# Arduino ProMicro MIDI Gorkon
+# MIDI Vader's Wrapper
 
-Arduino SysEx programmable 8 Knobs MIDI USB Controller using Arduino ProMicro
+Arduino (ProMicro) SysEx programmable 8 Knobs MIDI USB Controller
 
 ## Photo
 
@@ -8,11 +8,11 @@ Arduino SysEx programmable 8 Knobs MIDI USB Controller using Arduino ProMicro
 
 ## Breadboard
 
-![](doc/schematics/midi-gorkon_bb.png)
+![](doc/schematics/midi-vaderswrapper_bb.png)
 
 ## Schematics
 
-![](doc/schematics/midi-gorkon_schema.png)
+![](doc/schematics/midi-vaderswrapper_schema.png)
 
 ## Fritzing parts
 
@@ -63,16 +63,16 @@ make
 make upload
 ```
 
-## Gorkon Configuration App (Ubuntu/Debian)
+## Vader's Wrapper Configuration App (Ubuntu/Debian)
 
 ```shell
 # Install dependencies
 sudo apt install python3-rtmidi
 
 # Launch using Jack
-./gorkon-config
+./vaderswrapper-config
 # Launch using Alsa
-./gorkon-config -a
+./vaderswrapper-config -a
 ```
 
-![](doc/gorkon-config-app.png)
+![](doc/vaderswrapper-config-app.png)

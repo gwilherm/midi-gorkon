@@ -7,7 +7,7 @@ FQBN := arduino:avr:micro
 PORT := /dev/ttyACM0
 BUILD := build
 FLAGS := -DFW_VERSION=\"$(FW_VERSION)\"
-USB_NAME := Gorkon
+USB_NAME := VadersWrapper
 
 ARDUINO := arduino-cli
 
