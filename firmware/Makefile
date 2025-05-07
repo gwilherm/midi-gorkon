@@ -15,10 +15,14 @@ SKETCH := $(wildcard *.ino)
 LIBS := $(wildcard *.cpp *.h *.tcc)
 HEX := $(BUILD)/$(subst :,.,$(FQBN))/$(addsuffix .hex, $(SKETCH))
 
+ifeq ($(CLEAN),1)
+CLEANOPT := --clean
+endif
+
 all: $(HEX)
 
 $(HEX): $(SKETCH) $(LIBS)
-	$(ARDUINO) compile --verbose --log -b $(FQBN) \
+	$(ARDUINO) compile $(CLEANOPT) --verbose --log -b $(FQBN) \
 		--build-property compiler.cpp.extra_flags="$(FLAGS)" \
 		--build-property build.usb_product='"$(USB_NAME)"' -e
 
@@ -27,3 +31,4 @@ upload: $(HEX)
 
 clean:
 	rm -rf $(BUILD)
+	$(ARDUINO) cache clean
