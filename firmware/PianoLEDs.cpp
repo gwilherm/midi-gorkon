@@ -8,7 +8,7 @@ void PianoLEDs::begin()
 
 void PianoLEDs::loop()
 {
-    if(!this->_rgbFadeTimer) return;
+    if(!this->_rgbFadeTimer.isElapsed()) return;
     uint8_t r = this->_targetColor.r;
     uint8_t g = this->_targetColor.g;
     uint8_t b = this->_targetColor.b;
@@ -23,7 +23,7 @@ void PianoLEDs::loop()
 
         this->_ledStrip.show();
     }
-    this->_rgbFadeTimer.beginNextPeriod();
+    this->_rgbFadeTimer.lap();
 }
 
 void PianoLEDs::fadeToGreen()

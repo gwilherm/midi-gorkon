@@ -1,9 +1,8 @@
 #ifndef PIANO_LEDS_H
 #define PIANO_LEDS_H
 
-#include <Control_Surface.h>
-
 #include "ILEDStrip.h"
+#include "utils/Chrono.h"
 
 typedef struct 
 {
@@ -35,7 +34,7 @@ protected:
     ILEDStrip& _ledStrip;
     rgb_t _currentColor;
     rgb_t _targetColor;
-    AH::Timer<millis> _rgbFadeTimer;
+    Chrono _rgbFadeTimer;
 };
 
 #endif // PIANO_LEDS_H
