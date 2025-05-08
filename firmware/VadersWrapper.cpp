@@ -2,19 +2,18 @@
 #include <EEPROM.h>
 
 #include "VadersWrapper.h"
+#include "hardware_config.h"
 
 #define BTN_PIN 1
 #define SDO_PIN 2
 #define SCL_PIN 3
-#define RGB_PIN 4
-#define LED_COUNT 4
 
 USBMIDI_Interface midi;  // Instantiate a MIDI Interface to use
 
 VadersWrapper::VadersWrapper():
     piano(SCL_PIN, SDO_PIN, MIDI_Notes::C(4)),
-    pianoRGB(LED_COUNT, RGB_PIN, NEO_GRB + NEO_KHZ800),
-    rgbFadeTimer(3)
+    _ledStrip(PIANO_LED_COUNT, PIANO_RGB_PIN),
+    _pianoLeds(_ledStrip)
 {
     char *copy = strdup(FW_VERSION);
 
@@ -33,18 +32,17 @@ void VadersWrapper::begin()
     dumpConfig();
 #endif
 
-    pinMode(BTN_PINS, INPUT_PULLUP);
+    pinMode(BTN_PIN, INPUT_PULLUP);
 
-    pianoRGB.begin();           // INITIALIZE NeoPixel pianoRGB object (REQUIRED)
-    pianoRGB.show();            // Turn OFF all pixels ASAP
-    pianoRGB.setBrightness(10);
+    this->_ledStrip.begin();
+    _pianoLeds.begin();
 
     Control_Surface.begin();  // Initialize the Control Surface
     midi.begin();
     midi.setCallbacks(this);
 }
 
-void VadersWrapper::update()
+void VadersWrapper::loop()
 {   
     handlePianoModeSwitch();
 
@@ -52,7 +50,7 @@ void VadersWrapper::update()
 
     midi.update();
 
-    pianoRGBColorFade();
+    _pianoLeds.loop();
 }
 
 void VadersWrapper::sendPatchStatus()
@@ -315,7 +313,7 @@ void VadersWrapper::onSysExMessage(MIDI_Interface &, SysExMessage sysex)
 
 void VadersWrapper::handlePianoModeSwitch()
 {
-    int newBtnState = digitalRead(BTN_PINS);
+    int newBtnState = digitalRead(BTN_PIN);
     if ((millis() - this->pianoModeSwitchLastDebounceTime) > 70)
     {
         if ((this->pianoModeSwitchState == LOW) && (newBtnState == HIGH))
@@ -327,46 +325,25 @@ void VadersWrapper::handlePianoModeSwitch()
                 Serial.println("Hold");
 #endif
                 piano.setMode(PianoMode::Hold);
-                this->targetColor = { 25, 210,  25}; // fade into green
+                _pianoLeds.fadeToGreen();
                 break;
             case PianoMode::Hold:
 #ifdef FW_DEBUG
                 Serial.println("Monodic");
 #endif
                 piano.setMode(PianoMode::Monodic);
-                this->targetColor = { 25,  25, 210}; // fade into blue
+                _pianoLeds.fadeToBlue();
                 break;
             case PianoMode::Monodic:
 #ifdef FW_DEBUG
                 Serial.println("Standard");
 #endif
                 piano.setMode(PianoMode::Standard);
-                this->targetColor = {  0,   0,   0}; // fade into black
+                _pianoLeds.fadeToBlack();
                 break;
             }
         }
         this->pianoModeSwitchState = newBtnState;
         this->pianoModeSwitchLastDebounceTime = millis();
     }
-}
-
-
-void VadersWrapper::pianoRGBColorFade()
-{
-    if(!this->rgbFadeTimer) return;
-    uint8_t r      = targetColor.r;
-    uint8_t g      = targetColor.g;
-    uint8_t b      = targetColor.b;
-
-    if ((currColor.r != r) || (currColor.g != g) || (currColor.b != b)){  // while the curr color is not yet the target color
-        if (currColor.r < r) currColor.r++; else if (currColor.r > r) currColor.r--;  // increment or decrement the old color values
-        if (currColor.g < g) currColor.g++; else if (currColor.g > g) currColor.g--;
-        if (currColor.b < b) currColor.b++; else if (currColor.b > b) currColor.b--;
-
-        for(uint16_t i = 0; i < pianoRGB.numPixels(); i++)
-            pianoRGB.setPixelColor(i, currColor.r, currColor.g, currColor.b);  // set the color
-
-        pianoRGB.show();
-    }
-    this->rgbFadeTimer.beginNextPeriod();
 }

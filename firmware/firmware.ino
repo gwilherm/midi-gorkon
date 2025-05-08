@@ -18,6 +18,6 @@ void loop()
 #ifdef FW_DEBUG_VERBOSE
     Serial.println("loop");
 #endif
-    vw.update();
+    vw.loop();
 
 }

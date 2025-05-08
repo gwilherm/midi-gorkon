@@ -15,5 +15,10 @@ const uint8_t ENC_PINS[ENC_NB] = { A10, A9, A8, A7,
 // Buttons pins
 const uint8_t BTN_PINS[BTN_NB] = { 5 };
 
+// Piano RGB pin
+#define PIANO_RGB_PIN 4
+
+// Piano RGB LED amount
+#define PIANO_LED_COUNT 4
 
 #endif // HARDWARE_CONFIG_H
