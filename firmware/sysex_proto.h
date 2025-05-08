@@ -1,7 +1,7 @@
 #ifndef SYSEX_PROTO_H
 #define SYSEX_PROTO_H
 
-#include "config.h"
+#include "hardware_config.h"
 
 namespace SysExProto {
     constexpr static const uint8_t SysExStart = 0xF0;

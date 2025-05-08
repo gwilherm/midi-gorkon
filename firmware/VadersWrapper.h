@@ -3,7 +3,8 @@
 
 #include <Adafruit_NeoPixel.h>
 
-#include "config.h"
+#include "hardware_config.h"
+#include "VwConfig.h"
 #include "sysex_proto.h"
 #include "components/TouchpadPiano.h"
 #include "components/CCPushButton.h"
@@ -48,7 +49,6 @@ protected:
     // MIDI_Callbacks
     void onSysExMessage(MIDI_Interface &, SysExMessage sysex) override;
 
-
 private:
     SysExProto::semver_t fw_version;
     CCPotentiometer* enc[ENC_NB];
@@ -63,8 +63,8 @@ private:
     int pianoModeSwitchState = HIGH;
     unsigned long pianoModeSwitchLastDebounceTime = 0;
 
-
-    uint8_t channel;
+public:
+    VwConfig _config;
 };
 
 #endif // VADERSWRAPPER_H

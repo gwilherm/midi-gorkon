@@ -14,8 +14,7 @@ USBMIDI_Interface midi;  // Instantiate a MIDI Interface to use
 VadersWrapper::VadersWrapper():
     piano(SCL_PIN, SDO_PIN, MIDI_Notes::C(4)),
     pianoRGB(LED_COUNT, RGB_PIN, NEO_GRB + NEO_KHZ800),
-    rgbFadeTimer(3),
-    channel(0)
+    rgbFadeTimer(3)
 {
     char *copy = strdup(FW_VERSION);
 
@@ -67,7 +66,7 @@ void VadersWrapper::sendPatchStatus()
     sts.sts.msg_idx = SysExProto::PATCH_STS;
 
     sts.sts.fw_ver  = this->fw_version;
-    sts.sts.channel = this->channel;
+    sts.sts.channel = this->_config.getChannel();
 
     for (int i = 0; i < ENC_NB; i++)
         if (this->enc[i])
@@ -117,7 +116,7 @@ void VadersWrapper::handleChangeChannelSysEx(const uint8_t* msg, unsigned size)
                 Channel(newChan)
             });
 
-            this->channel = newChan;
+            this->_config.setChannel(newChan);
         }
     }
 }
@@ -133,7 +132,7 @@ void VadersWrapper::handleChangeStartNoteSysEx(const uint8_t* msg, unsigned size
             Serial << "Start note = " << startNote << endl;
 #endif
 
-            this->piano.setBaseAddressUnsafe({startNote, Channel(this->channel)});
+            this->piano.setBaseAddressUnsafe({startNote, Channel(this->_config.getChannel())});
         }
     }
 }
@@ -167,7 +166,7 @@ void VadersWrapper::handleBtnToggleSysEx(const uint8_t* msg, unsigned size)
         SysExProto::patch_cmd_t* patch = (SysExProto::patch_cmd_t*)msg;
         if ((patch->ctl_idx < BTN_NB) && (patch->ctl_val <= 1))
         {
-            uint8_t mcc = BTN_DEFAULT_MIDI_CC[patch->ctl_idx];
+            uint8_t mcc = DEFAULT_BTN_MIDI_CC[patch->ctl_idx];
             if (this->btn[patch->ctl_idx])
             {
                 mcc = this->btn[patch->ctl_idx]->getAddress().getAddress();
@@ -182,7 +181,7 @@ void VadersWrapper::handleBtnToggleSysEx(const uint8_t* msg, unsigned size)
 
 void VadersWrapper::saveConfig()
 {
-    EEPROM.update(0, this->channel);
+    EEPROM.update(0, this->_config.getChannel());
 
     for (int i = 0; i < ENC_NB; i++)
     {
@@ -192,8 +191,8 @@ void VadersWrapper::saveConfig()
 
     for (int i = 0; i < BTN_NB; i++)
     {
-        uint8_t mcc = BTN_DEFAULT_MIDI_CC[i];
-        uint8_t tog = BTN_DEFAULT_TOGGLE[i];
+        uint8_t mcc = DEFAULT_BTN_MIDI_CC[i];
+        uint8_t tog = DEFAULT_BTN_TOGGLE[i];
         if (this->btn[i])
         {
             mcc = this->btn[i]->getAddress().getAddress();
@@ -209,13 +208,13 @@ void VadersWrapper::saveConfig()
 
 void VadersWrapper::restoreConfig()
 {
-    this->channel = EEPROM.read(0);
+    this->_config.setChannel(EEPROM.read(0));
 
     for (int i = 0; i < ENC_NB; i++)
     {
         uint8_t mcc = EEPROM.read(1+i);
         if (mcc > 127)
-            mcc = ENC_DEFAULT_MIDI_CC[i];
+            mcc = DEFAULT_ENC_MIDI_CC[i];
 
         this->enc[i] = new CCPotentiometer(ENC_PINS[i], mcc);
     }
@@ -225,9 +224,9 @@ void VadersWrapper::restoreConfig()
         uint8_t mcc = EEPROM.read(1+ENC_NB+i);
         uint8_t tog = EEPROM.read(1+ENC_NB+i+1);
         if (mcc > 127)
-            mcc = BTN_DEFAULT_MIDI_CC[i];
+            mcc = DEFAULT_BTN_MIDI_CC[i];
         if (tog > 127)
-            tog = BTN_DEFAULT_TOGGLE[i];
+            tog = DEFAULT_BTN_TOGGLE[i];
 
         this->btn[i] = new CCPushButton(BTN_PINS[i], mcc, tog);
     }
@@ -235,16 +234,16 @@ void VadersWrapper::restoreConfig()
 
 void VadersWrapper::resetConfig()
 {
-    this->channel = 0;
+    this->_config.setChannel(0);
 
     for (int i = 0; i < ENC_NB; i++)
         if (this->enc[i])
-            this->enc[i]->setAddress(ENC_DEFAULT_MIDI_CC[i]);
+            this->enc[i]->setAddress(DEFAULT_ENC_MIDI_CC[i]);
 
     for (int i = 0; i < BTN_NB; i++)
     {
-        uint8_t mcc = BTN_DEFAULT_MIDI_CC[i];
-        bool    tog = BTN_DEFAULT_TOGGLE[i];
+        uint8_t mcc = DEFAULT_BTN_MIDI_CC[i];
+        bool    tog = DEFAULT_BTN_TOGGLE[i];
         this->btn[i] = new CCPushButton(BTN_PINS[i], mcc, tog);
     }
 }
@@ -252,7 +251,7 @@ void VadersWrapper::resetConfig()
 #ifdef FW_DEBUG
 void VadersWrapper::dumpConfig()
 {
-    Serial << "Channel = " << this->channel << endl;
+    Serial << "Channel = " << this->_config.getChannel() << endl;
     for (int i = 0; i < ENC_NB; i++)
     {
         Serial << "Enc[" << i << "] (pin:" << ENC_PINS[i] << ")"
