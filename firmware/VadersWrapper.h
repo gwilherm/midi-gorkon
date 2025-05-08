@@ -3,11 +3,10 @@
 
 #include <Adafruit_NeoPixel.h>
 
-#include "TouchpadPiano.h"
-#include "VwCCEncoder.h"
-#include "VwCCButton.h"
-#include "sysex_proto.h"
 #include "config.h"
+#include "sysex_proto.h"
+#include "components/TouchpadPiano.h"
+#include "components/CCPushButton.h"
 
 typedef struct 
 {
@@ -52,8 +51,8 @@ protected:
 
 private:
     SysExProto::semver_t fw_version;
-    VwCCEncoder*  enc[ENC_NB];
-    VwCCButton*   btn[BTN_NB];
+    CCPotentiometer* enc[ENC_NB];
+    CCPushButton*    btn[BTN_NB];
     TouchpadPiano piano;
     Adafruit_NeoPixel pianoRGB;
 

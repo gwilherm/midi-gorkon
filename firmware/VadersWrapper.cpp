@@ -175,7 +175,7 @@ void VadersWrapper::handleBtnToggleSysEx(const uint8_t* msg, unsigned size)
             }
 
             bool tog = (bool)patch->ctl_val;
-            this->btn[patch->ctl_idx] = new VwCCButton(BTN_PINS[patch->ctl_idx], mcc, tog);
+            this->btn[patch->ctl_idx] = new CCPushButton(BTN_PINS[patch->ctl_idx], mcc, tog);
         }
     }
 }
@@ -217,7 +217,7 @@ void VadersWrapper::restoreConfig()
         if (mcc > 127)
             mcc = ENC_DEFAULT_MIDI_CC[i];
 
-        this->enc[i] = new VwCCEncoder(ENC_PINS[i], mcc);
+        this->enc[i] = new CCPotentiometer(ENC_PINS[i], mcc);
     }
 
     for (int i = 0; i < BTN_NB; i++)
@@ -229,7 +229,7 @@ void VadersWrapper::restoreConfig()
         if (tog > 127)
             tog = BTN_DEFAULT_TOGGLE[i];
 
-        this->btn[i] = new VwCCButton(BTN_PINS[i], mcc, tog);
+        this->btn[i] = new CCPushButton(BTN_PINS[i], mcc, tog);
     }
 }
 
@@ -245,7 +245,7 @@ void VadersWrapper::resetConfig()
     {
         uint8_t mcc = BTN_DEFAULT_MIDI_CC[i];
         bool    tog = BTN_DEFAULT_TOGGLE[i];
-        this->btn[i] = new VwCCButton(BTN_PINS[i], mcc, tog);
+        this->btn[i] = new CCPushButton(BTN_PINS[i], mcc, tog);
     }
 }
 
