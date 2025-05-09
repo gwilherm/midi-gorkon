@@ -7,7 +7,8 @@ class Chrono
 {
 public:
     Chrono(uint64_t intervalMs):
-        _intervalMs(intervalMs)
+        _intervalMs(intervalMs),
+        _lastMs(0)
     {};
 
     void lap() { _lastMs = millis(); };
@@ -16,7 +17,6 @@ public:
 protected:
     uint32_t _intervalMs;
     uint64_t _lastMs;
-
 };
 
 #endif // CHRONO_H

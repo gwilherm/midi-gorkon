@@ -13,12 +13,15 @@ void PianoLEDs::loop()
     uint8_t g = this->_targetColor.g;
     uint8_t b = this->_targetColor.b;
 
-    if ((this->_currentColor.r != r) || (this->_currentColor.g != g) || (this->_currentColor.b != b)){  // while the curr color is not yet the target color
+    // while the curr color is not yet the target color
+    if ((this->_currentColor.r != r) || (this->_currentColor.g != g) || (this->_currentColor.b != b))
+    {
         if (this->_currentColor.r < r) this->_currentColor.r++; else if (this->_currentColor.r > r) this->_currentColor.r--;  // increment or decrement the old color values
         if (this->_currentColor.g < g) this->_currentColor.g++; else if (this->_currentColor.g > g) this->_currentColor.g--;
         if (this->_currentColor.b < b) this->_currentColor.b++; else if (this->_currentColor.b > b) this->_currentColor.b--;
 
-        for(uint16_t i = 0; i < this->_ledStrip.numPixels(); i++)
+        uint16_t numPixels = this->_ledStrip.numPixels();
+        for (uint16_t i = 0; i < numPixels; i++)
             this->_ledStrip.setPixelColor(i, this->_currentColor.r, this->_currentColor.g, this->_currentColor.b);  // set the color
 
         this->_ledStrip.show();
